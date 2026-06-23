@@ -2,9 +2,5 @@
   publish = "."
   functions = "netlify/functions"
 
-[functions]
-  node_bundler = "esbuild"
-
-[[functions]]
-  name = "arusa"
+[functions."arusa"]
   timeout = 26
