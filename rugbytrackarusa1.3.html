@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RugbyTrack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Oswald:wght@500;600&amp;display=swap" rel="stylesheet">
+<!-- xlsx se carga dinámicamente sólo cuando se usa (exportar/importar Excel), para no depender de red al iniciar -->
+<style>
+:root{
+  --bg:#ffffff; --bg-secondary:#f8fafc; --border:#e2e8f0;
+  --text:#1e293b; --text-secondary:#64748b;
+  --accent:#322a4f; --accent-text:#ffffff;
+  --brand-red:#c8333a;
+  --sidebar-bg:#322a4f; --sidebar-text:#cbd5e1;
+  --success-bg:#dcfce7; --success-text:#15803d;
+  --warning-bg:#fef3c7; --warning-text:#b45309;
+  --danger-bg:#fee2e2; --danger-text:#b91c1c;
+  --info-bg:#dbeafe; --info-text:#1d4ed8;
+  --neutral-bg:#f1f5f9; --neutral-text:#475569;
+  --highlight-bg:#fde2e2; --highlight-border:#c8333a;
+  --match-bg:#e3e0f0; --match-border:#322a4f;
+  --r-sm:6px; --r-md:8px; --r-lg:12px;
+  --f-body:'Inter',system-ui,sans-serif; --f-display:'Oswald',var(--f-body);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0f172a; --bg-secondary:#1e293b; --border:#334155; --text:#e2e8f0; --text-secondary:#94a3b8;
+    --accent:#9c8fc9; --accent-text:#1e1b2e;
+    --highlight-bg:#4a1f24; --highlight-border:#e2727a;
+    --match-bg:#2a2547; --match-border:#9c8fc9;
+    --success-bg:#14532d; --success-text:#86efac;
+    --warning-bg:#78350f; --warning-text:#fde68a;
+    --danger-bg:#7f1d1d; --danger-text:#fca5a5;
+    --info-bg:#1e3a8a; --info-text:#bfdbfe;
+    --neutral-bg:#334155; --neutral-text:#cbd5e1;
+  }
+}
+*{box-sizing:border-box;}
+body{margin:0; font-family:var(--f-body); background:var(--bg-secondary); color:var(--text); font-size:14px;}
+#app{display:flex; min-height:100vh;}
+.sidebar{width:220px; flex-shrink:0; background:var(--sidebar-bg); color:var(--sidebar-text); padding:20px 14px; display:flex; flex-direction:column;}
+.main{flex:1; padding:28px 36px; min-width:0;}
+.brand{display:flex; align-items:center; gap:10px; margin-bottom:16px;}
+.logo{width:36px; height:36px; border-radius:50%; background:#fff; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:600; font-family:var(--f-display); flex-shrink:0; font-size:13px; overflow:hidden; padding:2px;}
+.logo img{width:100%; height:100%; object-fit:contain;}
+h1,h2,h3{font-family:var(--f-display); font-weight:600; margin:0;}
+.main h2{font-size:21px; margin-bottom:16px;}
+.main h3{font-size:15px; margin:20px 0 10px;}
+nav{margin-top:4px;}
+.nav-item{display:flex; align-items:center; padding:9px 12px; border-radius:var(--r-md); cursor:pointer; margin-bottom:2px; font-size:14px; color:var(--sidebar-text);}
+.nav-item:hover{background:rgba(255,255,255,0.07);}
+.nav-item.active{background:rgba(255,255,255,0.14); color:#fff; font-weight:600;}
+select#cat-select{width:100%; margin-bottom:16px; background:rgba(255,255,255,0.06); color:#fff; border-color:rgba(255,255,255,0.15);}
+button{font-family:inherit; font-size:13px; cursor:pointer; border:1px solid var(--border); background:var(--bg); color:var(--text); border-radius:var(--r-md); padding:6px 14px;}
+button:hover{background:var(--bg-secondary);}
+button.primary{background:var(--accent); color:var(--accent-text); border-color:var(--accent);}
+button.primary:hover{opacity:0.92;}
+button.danger{background:none; border:1px solid transparent; color:var(--danger-text);}
+button.danger:hover{background:var(--danger-bg);}
+input,select,textarea{font-family:inherit; font-size:13px; padding:7px 9px; border:1px solid var(--border); border-radius:var(--r-md); background:var(--bg); color:var(--text);}
+a{color:var(--accent); cursor:pointer; text-decoration:none;}
+a:hover{text-decoration:underline;}
+table{width:100%; border-collapse:collapse; font-size:13px; background:var(--bg); border-radius:var(--r-lg); overflow:hidden;}
+th{text-align:left; padding:10px 12px; color:var(--text-secondary); font-weight:500; border-bottom:1px solid var(--border); font-size:11px; text-transform:uppercase; letter-spacing:0.04em;}
+th.sortable{cursor:pointer; user-select:none;}
+th.sortable:hover{color:var(--text);}
+td{padding:11px 12px; border-bottom:1px solid var(--border); vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+.badge{font-size:12px; padding:3px 10px; border-radius:999px; font-weight:500; display:inline-block; white-space:nowrap;}
+.badge-success{background:var(--success-bg); color:var(--success-text);}
+.badge-warning{background:var(--warning-bg); color:var(--warning-text);}
+.badge-danger{background:var(--danger-bg); color:var(--danger-text);}
+.badge-info{background:var(--info-bg); color:var(--info-text);}
+.badge-neutral{background:var(--neutral-bg); color:var(--neutral-text);}
+.card{background:var(--bg); border:1px solid var(--border); border-radius:var(--r-lg); padding:16px;}
+.toolbar{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap;}
+.field{margin-bottom:12px;}
+.field label{display:block; font-size:12px; color:var(--text-secondary); margin-bottom:4px;}
+.field input,.field select,.field textarea{width:100%;}
+.modal-overlay{position:fixed; inset:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:50;}
+.modal{background:var(--bg); border-radius:var(--r-lg); padding:22px; width:380px; max-height:85vh; overflow:auto;}
+.calendar{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
+.cal-day{aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:var(--r-md); cursor:pointer; border:1px solid var(--border); background:var(--bg); padding:4px 2px; overflow:hidden;}
+.cal-day-num{font-size:inherit;}
+.cal-day-match-info{font-size:9px; line-height:1.25; color:var(--match-border); font-weight:600; text-align:center; margin-top:2px; word-break:break-word; max-width:100%;}
+.cal-day.has-session{background:var(--highlight-bg); border-color:var(--highlight-border); font-weight:600;}
+.cal-day.has-match{aspect-ratio:auto; min-height:54px; justify-content:flex-start; padding-top:6px; background:var(--match-bg); border-color:var(--match-border); font-weight:600; box-shadow:inset 0 0 0 2px var(--match-border);}
+.cal-day.has-session.has-match{background:linear-gradient(135deg, var(--highlight-bg) 50%, var(--match-bg) 50%);}
+.cal-day.empty{visibility:hidden; cursor:default;}
+.cal-day:hover{outline:2px solid var(--accent); outline-offset:1px;}
+.cal-label{text-align:center; font-size:12px; color:var(--text-secondary); padding:4px;}
+
+/* ---------- Mobile header (hidden on desktop) ---------- */
+.mobile-header{display:none; align-items:center; gap:12px; padding:14px 16px; background:var(--sidebar-bg); color:#fff; position:sticky; top:0; z-index:40;}
+.mobile-header .logo{margin:0;}
+.mobile-header .mh-title{font-family:var(--f-display); font-size:17px; font-weight:600; flex:1;}
+.mh-burger{background:none; border:none; color:#fff; font-size:22px; padding:4px 8px; line-height:1;}
+.mh-burger:hover{background:rgba(255,255,255,0.1);}
+
+@media (max-width: 760px){
+  #app{display:block;}
+  .mobile-header{display:flex;}
+  .sidebar{
+    position:fixed; top:0; left:0; height:100vh; width:240px; z-index:60;
+    transform:translateX(-100%); transition:transform 0.2s ease; padding-top:64px;
+  }
+  .sidebar.open{transform:translateX(0); box-shadow:4px 0 24px rgba(0,0,0,0.3);}
+  .sidebar .brand{display:none;}
+  .sidebar-scrim{display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:50;}
+  .sidebar-scrim.open{display:block;}
+  .main{padding:16px;}
+  .main h2{font-size:18px;}
+  .toolbar{flex-direction:column; align-items:stretch;}
+  .toolbar > *{width:100%;}
+  .toolbar select{width:100%;}
+  .cal-nav{justify-content:center; width:100%;}
+
+  /* Tables -> stacked cards (default) */
+  table{background:none; border-radius:0;}
+  thead{display:none;}
+  table, tbody, tr, td{display:block; width:100%;}
+  tr{background:var(--bg); border:1px solid var(--border); border-radius:var(--r-lg); margin-bottom:10px; padding:10px 14px;}
+  td{border-bottom:none; padding:5px 0; display:flex; justify-content:space-between; align-items:center; gap:10px; text-align:right;}
+  td:empty{display:none;}
+  td:before{content:attr(data-label); font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-secondary); text-align:left; flex-shrink:0;}
+  td:first-child{font-weight:600; font-size:15px;}
+  td:first-child:before{content:none;}
+  td a, td button{margin-left:auto;}
+
+  /* Asistencia: nombre y botón Presente/Ausente siempre en la misma línea, sin scroll */
+  .asist-table{display:block; width:100%; background:none;}
+  .asist-table thead{display:none;}
+  .asist-table tbody{display:block; width:100%;}
+  .asist-table tr{display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--bg); border:1px solid var(--border); border-radius:var(--r-lg); margin-bottom:8px; padding:10px 14px; width:100%;}
+  .asist-table td{display:block; padding:0; border-bottom:none; text-align:left;}
+  .asist-table td:before{content:none;}
+  .asist-table td:first-child{font-weight:600; font-size:15px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .asist-table td:last-child{flex:0 0 auto; width:auto;}
+  .asist-table td button{margin-left:0;}
+
+  /* Tables marked .table-scroll -> real columns with horizontal scroll (Plantel, Lesiones, Tarjetas) */
+  .table-scroll-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid var(--border); border-radius:var(--r-lg);}
+  .table-scroll{background:var(--bg); border-radius:0; display:table; table-layout:auto; width:auto;}
+  .table-scroll thead{display:table-header-group;}
+  .table-scroll th{white-space:nowrap; padding:10px 14px;}
+  .table-scroll tbody{display:table-row-group;}
+  .table-scroll tr{display:table-row; background:none; border:none; border-radius:0; margin-bottom:0; padding:0;}
+  .table-scroll td{display:table-cell; border-bottom:1px solid var(--border); padding:11px 14px; text-align:left; white-space:nowrap;}
+  .table-scroll td:before{content:none;}
+  .table-scroll td:first-child{font-weight:400; font-size:13px;}
+  .table-scroll td a, .table-scroll td button{margin-left:0;}
+  .table-scroll tr:last-child td{border-bottom:none;}
+
+  .modal{width:100%; max-width:100%; height:100%; max-height:100%; border-radius:0; padding:18px;}
+  .modal-overlay{padding:0;}
+  .calendar{gap:4px;}
+  .cal-day{font-size:13px;}
+  .card{padding:14px;}
+  .metrics-grid{grid-template-columns:repeat(2,1fr) !important;}
+  .charts-grid{grid-template-columns:1fr !important;}
+  #screen-cfg-addplayer{flex-direction:column; align-items:stretch !important;}
+  #screen-cfg-addplayer > *{width:100%;}
+  .modal div[style*="display:flex"][style*="gap:12px"]{flex-direction:column; gap:0 !important;}
+}
+</style>
+<style id="claude-agent-animation-styles">
+      @keyframes claude-pulse {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+      }
+      #claude-agent-glow-border-inner {
+        animation: claude-pulse 2s ease-in-out infinite;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #claude-agent-glow-border-inner {
+          animation: none;
+        }
+      }
+    </style><link href="chrome-extension://alhgpfoeiimagjlnfekdhkjlkiomcapa/js/css/inject.css" rel="stylesheet" type="text/css" data-apio="true"><link data-apio="true" rel="stylesheet" type="text/css" href="chrome-extension://alhgpfoeiimagjlnfekdhkjlkiomcapa/js/css/a_chrome-extension_inject_global_module_scss.css"><link data-apio="true" rel="stylesheet" type="text/css" href="chrome-extension://alhgpfoeiimagjlnfekdhkjlkiomcapa/js/css/a_chrome-extension_inject_apollo-everywhere_containers_ApolloEverywhereServiceContainerV-619a10.css"></head>
+<body>
+<div class="mobile-header">
+  <button class="mh-burger" onclick="toggleSidebar()" aria-label="Abrir menú">☰</button>
+  <div id="mh-logo" class="logo"><img src="" alt="Logo del club"></div>
+  <div id="mh-title" class="mh-title">Asistencia</div>
+</div>
+<div id="sidebar-scrim" class="sidebar-scrim" onclick="closeSidebar()"></div>
+<div id="app">
+  <div id="sidebar" class="sidebar"><div class="brand"><div class="logo"><img src="" alt="Logo"></div><div style="font-family:var(--f-display); font-size:18px; font-weight:600;">COBS</div></div><select id="cat-select" onchange="setCategoria(this.value)"><option selected="">Primera</option></select><nav><div class="nav-item active" onclick="switchTab('asistencia')">Asistencia</div><div class="nav-item" onclick="switchTab('plantel')">Plantel</div><div class="nav-item" onclick="switchTab('lesiones')">Lesiones</div><div class="nav-item" onclick="switchTab('tarjetas')">Tarjetas</div><div class="nav-item" onclick="switchTab('ausencias')">Ausencias</div><div class="nav-item" onclick="switchTab('reportes')">Reportes</div><div class="nav-item" onclick="switchTab('arusa')">ARUSA</div><div class="nav-item" onclick="switchTab('configuracion')">Configuración</div></nav></div>
+  <div id="main" class="main"><h2>Asistencia — Primera</h2><div class="toolbar"><div class="cal-nav" style="display:flex; gap:10px; align-items:center;"><button onclick="calNav(-1)">‹</button><strong style="font-family:var(--f-display); font-size:15px;">Junio 2026</strong><button onclick="calNav(1)">›</button></div><button class="primary" onclick="exportAsistencia()">Exportar a Excel</button></div><div class="toolbar" style="margin-top:-10px;"><span></span><button onclick="openPartidoModal(null)">+ Agregar partido</button></div><div class="calendar"><div class="cal-label">Dom</div><div class="cal-label">Lun</div><div class="cal-label">Mar</div><div class="cal-label">Mié</div><div class="cal-label">Jue</div><div class="cal-label">Vie</div><div class="cal-label">Sáb</div><div class="cal-day empty"></div><div class="cal-day" onclick="openCalendarDate('2026-06-01')"><span class="cal-day-num">1</span></div><div class="cal-day has-session" onclick="openCalendarDate('2026-06-02')"><span class="cal-day-num">2</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-03')"><span class="cal-day-num">3</span></div><div class="cal-day has-session" onclick="openCalendarDate('2026-06-04')"><span class="cal-day-num">4</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-05')"><span class="cal-day-num">5</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-06')"><span class="cal-day-num">6</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-07')"><span class="cal-day-num">7</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-08')"><span class="cal-day-num">8</span></div><div class="cal-day has-session" onclick="openCalendarDate('2026-06-09')"><span class="cal-day-num">9</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-10')"><span class="cal-day-num">10</span></div><div class="cal-day has-session" onclick="openCalendarDate('2026-06-11')"><span class="cal-day-num">11</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-12')"><span class="cal-day-num">12</span></div><div class="cal-day has-match" onclick="openCalendarDate('2026-06-13')"><span class="cal-day-num">13</span><div class="cal-day-match-info">L · Stade</div></div><div class="cal-day" onclick="openCalendarDate('2026-06-14')"><span class="cal-day-num">14</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-15')"><span class="cal-day-num">15</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-16')"><span class="cal-day-num">16</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-17')"><span class="cal-day-num">17</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-18')"><span class="cal-day-num">18</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-19')"><span class="cal-day-num">19</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-20')"><span class="cal-day-num">20</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-21')"><span class="cal-day-num">21</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-22')"><span class="cal-day-num">22</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-23')"><span class="cal-day-num">23</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-24')"><span class="cal-day-num">24</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-25')"><span class="cal-day-num">25</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-26')"><span class="cal-day-num">26</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-27')"><span class="cal-day-num">27</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-28')"><span class="cal-day-num">28</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-29')"><span class="cal-day-num">29</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-30')"><span class="cal-day-num">30</span></div></div><div style="margin-top:14px; font-size:12px; color:var(--text-secondary); display:flex; flex-direction:column; gap:6px;"><div style="display:flex; align-items:center; gap:6px;"><span style="display:inline-block; width:12px; height:12px; background:var(--highlight-bg); border:1px solid var(--highlight-border); border-radius:3px;"></span>Día con entrenamiento registrado</div><div style="display:flex; align-items:center; gap:6px;"><span style="display:inline-block; width:12px; height:12px; background:var(--match-bg); border:1px solid var(--match-border); border-radius:3px;"></span>Día con partido registrado</div><div>Haz clic en cualquier día para ver o crear la asistencia</div></div></div>
+</div>
+<div id="modal-overlay" class="modal-overlay" onclick="if(event.target.id==='modal-overlay') closeModal()"><div id="modal-body" class="modal"></div></div>
+<script>
+const CLUB_LOGO_DATA_URL='data:image/png;base64,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';
+const STORAGE_KEY='rugbytrack-state';
+function getTodayStr(){
+  const d=new Date();
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
+const TODAY=getTodayStr();
+const DEFAULT_STATE={
+  clubName:'COBS',
+  categorias:['Primera','M19','M17'],
+  selectedCategoria:'Primera',
+  players:[
+    {id:1,name:"Agustin Lathrop",pos:"Pilar",categoria:"Primera"},
+    {id:2,name:"Alberto Armstrong",pos:"Scrum half",categoria:"Primera"},
+    {id:3,name:"Alejandro Gabler",pos:"Pilar",categoria:"Primera"},
+    {id:4,name:"Andres Vial",pos:"Hooker",categoria:"Primera"},
+    {id:5,name:"Benjamin Briner",pos:"Pilar",categoria:"Primera"},
+    {id:6,name:"Benjamin Escobedo",pos:"Centro",categoria:"Primera"},
+    {id:7,name:"Benjamin Sandoval",pos:"Fullback",categoria:"Primera"},
+    {id:8,name:"Benjamín Díaz",pos:"Segunda Línea",categoria:"Primera"},
+    {id:9,name:"Benjamín Perez",pos:"Pilar",categoria:"Primera"},
+    {id:10,name:"Clemente Labbé",pos:"Scrum half",categoria:"Primera"},
+    {id:11,name:"Clemente Ulloa",pos:"Wing",categoria:"Primera"},
+    {id:12,name:"Clemente Vildosola",pos:"Wing",categoria:"Primera"},
+    {id:13,name:"Clemente Vásquez",pos:"Tercera Línea",categoria:"Primera"},
+    {id:14,name:"Cristobal Besoain",pos:"Fullback",categoria:"Primera"},
+    {id:15,name:"Cristobal González",pos:"Wing",categoria:"Primera"},
+    {id:16,name:"Cristobal Soto",pos:"Hooker",categoria:"Primera"},
+    {id:17,name:"Cristobal Trucco",pos:"Segunda Línea",categoria:"Primera"},
+    {id:18,name:"Cristobal Vidal",pos:"Pilar",categoria:"Primera"},
+    {id:19,name:"Diego Baudrand",pos:"Tercera Línea",categoria:"Primera"},
+    {id:20,name:"Diego Beltrán",pos:"Wing",categoria:"Primera"},
+    {id:21,name:"Diego Lagos",pos:"Tercera Línea",categoria:"Primera"},
+    {id:22,name:"Diego Martínez",pos:"Pilar",categoria:"Primera"},
+    {id:23,name:"Diego Sylleros",pos:"Tercera Línea",categoria:"Primera"},
+    {id:24,name:"Dimitri Simonidis",pos:"Centro",categoria:"Primera"},
+    {id:25,name:"Eduardo Orpis",pos:"Tercera Línea",categoria:"Primera"},
+    {id:26,name:"Enzo Neglia",pos:"Pilar",categoria:"Primera"},
+    {id:27,name:"Felipe Beltran",pos:"Pilar",categoria:"Primera"},
+    {id:28,name:"Fernando Lopez",pos:"Wing",categoria:"Primera"},
+    {id:29,name:"Florean Schmidt",pos:"Segunda Línea",categoria:"Primera"},
+    {id:30,name:"Francisco Acevedo",pos:"Pilar",categoria:"Primera"},
+    {id:31,name:"Francisco Alvariño",pos:"Pilar",categoria:"Primera"},
+    {id:32,name:"Francisco Figueroa",pos:"Fly half",categoria:"Primera"},
+    {id:33,name:"Franco Costantino",pos:"Hooker",categoria:"Primera"},
+    {id:34,name:"Giovanni Di",pos:"Hooker",categoria:"Primera"},
+    {id:35,name:"Ignacio Alvarez",pos:"Segunda Línea",categoria:"Primera"},
+    {id:36,name:"Ignacio Bravo",pos:"Hooker",categoria:"Primera"},
+    {id:37,name:"Ignacio Soublette",pos:"Tercera Línea",categoria:"Primera"},
+    {id:38,name:"Jan Hasenlechner",pos:"Scrum half",categoria:"Primera"},
+    {id:39,name:"Joao Alves",pos:"Wing",categoria:"Primera"},
+    {id:40,name:"Joaquín Fuentes",pos:"Wing",categoria:"Primera"},
+    {id:41,name:"Jorge Araya",pos:"Pilar",categoria:"Primera"},
+    {id:42,name:"Jose González",pos:"Centro",categoria:"Primera"},
+    {id:43,name:"José Escobedo",pos:"Wing",categoria:"Primera"},
+    {id:44,name:"José Vildósola",pos:"Wing",categoria:"Primera"},
+    {id:45,name:"Juan Beheran",pos:"Segunda Línea",categoria:"Primera"},
+    {id:46,name:"Juan Labbe",pos:"Scrum half",categoria:"Primera"},
+    {id:47,name:"Juan Naranjo",pos:"Fly half",categoria:"Primera"},
+    {id:48,name:"Vicente Codorniu",pos:"Pilar",categoria:"Primera"},
+    {id:49,name:"Lucas Conejero",pos:"Segunda Línea",categoria:"Primera"},
+    {id:50,name:"Lucas Fyfe",pos:"Tercera Línea",categoria:"Primera"},
+    {id:51,name:"Lucas Muñoz",pos:"Fly half",categoria:"Primera"},
+    {id:52,name:"Lucas Pizarro",pos:"Centro",categoria:"Primera"},
+    {id:53,name:"Lucas Radrigán",pos:"Tercera Línea",categoria:"Primera"},
+    {id:54,name:"Lucas Sandoval",pos:"Fly half",categoria:"Primera"},
+    {id:55,name:"Manuel Escandón",pos:"Pilar",categoria:"Primera"},
+    {id:56,name:"Manuel Gurruchaga",pos:"Hooker",categoria:"Primera"},
+    {id:57,name:"Marcelo Arancibia",pos:"Pilar",categoria:"Primera"},
+    {id:58,name:"Martin De",pos:"Fly half",categoria:"Primera"},
+    {id:59,name:"Martin James",pos:"Pilar",categoria:"Primera"},
+    {id:60,name:"Martín Dumay",pos:"Centro",categoria:"Primera"},
+    {id:61,name:"Matías Rebolledo",pos:"Wing",categoria:"Primera"},
+    {id:62,name:"Max Whiting",pos:"Tercera Línea",categoria:"Primera"},
+    {id:63,name:"Nicolás Donoso",pos:"Wing",categoria:"Primera"},
+    {id:64,name:"Nicolás Raddatz",pos:"Centro",categoria:"Primera"},
+    {id:65,name:"Nicolás Toso",pos:"Centro",categoria:"Primera"},
+    {id:66,name:"Nicolás Trucco",pos:"Scrum half",categoria:"Primera"},
+    {id:67,name:"Nikola Bursic",pos:"Segunda Línea",categoria:"Primera"},
+    {id:68,name:"Pedro Pichara",pos:"Wing",categoria:"Primera"},
+    {id:69,name:"Pedro Radrigán",pos:"Tercera Línea",categoria:"Primera"},
+    {id:70,name:"Rafael Palacios",pos:"Tercera Línea",categoria:"Primera"},
+    {id:71,name:"Rodolfo Loyola",pos:"Fullback",categoria:"Primera"},
+    {id:72,name:"Rodrigo Araya",pos:"Centro",categoria:"Primera"},
+    {id:73,name:"Santiago Cabargas",pos:"Fullback",categoria:"Primera"},
+    {id:74,name:"Santiago Holmgren",pos:"Pilar",categoria:"Primera"},
+    {id:75,name:"Santiago Valenzuela",pos:"Segunda Línea",categoria:"Primera"},
+    {id:76,name:"Sebastián Bianchi",pos:"Scrum half",categoria:"Primera"},
+    {id:77,name:"Sebastián González",pos:"Tercera Línea",categoria:"Primera"},
+    {id:78,name:"Tomas Dallan",pos:"Wing",categoria:"Primera"},
+    {id:79,name:"Tomas Fuentes",pos:"Wing",categoria:"Primera"},
+    {id:80,name:"Tomas Fyfe",pos:"Tercera Línea",categoria:"Primera"},
+    {id:81,name:"Tomás García",pos:"Pilar",categoria:"Primera"},
+    {id:82,name:"Tomás Rivera",pos:"Hooker",categoria:"Primera"},
+    {id:83,name:"Vicente Abarca",pos:"Scrum half",categoria:"Primera"},
+    {id:84,name:"Vicente Acuña",pos:"Segunda Línea",categoria:"Primera"},
+    {id:85,name:"Vicente Contreras",pos:"Tercera Línea",categoria:"Primera"},
+    {id:86,name:"Vicente Easton",pos:"Hooker",categoria:"Primera"},
+    {id:87,name:"Vicente Whiting",pos:"Tercera Línea",categoria:"Primera"},
+    {id:88,name:"Yabra Aguad",pos:"Segunda Línea",categoria:"Primera"},
+    {id:89,name:"Jose Deik",pos:"Centro",categoria:"Primera"},
+    {id:90,name:"Iñaki De",pos:"Tercera Línea",categoria:"Primera"},
+    {id:91,name:"Gonzalo Lara",pos:"Centro",categoria:"Primera"},
+    {id:92,name:"Martin Escobar",pos:"Centro",categoria:"Primera"},
+    {id:93,name:"Julian Manzur",pos:"Pilar",categoria:"Primera"},
+    {id:94,name:"Ignacio Osorio",pos:"Wing",categoria:"Primera"},
+    {id:95,name:"Gaspar Salgado",pos:"Hooker",categoria:"Primera"}
+  ],
+  nextPlayerId:96,
+  sesiones:[
+    {id:1,fecha:'2026-04-09',asistencia:{38:true,85:true,82:true,4:false,30:true,77:true,56:true,74:true,51:true,41:true,25:true,47:true,33:true,58:true,27:true,22:true,3:true,43:true,86:true,53:true,23:true,46:true,5:true,73:true,49:true,24:true,16:true,10:false,18:true,71:true,1:true,14:true,67:true,78:true,80:true,50:true,45:true,79:true,55:true,54:true,7:true,34:true,81:true,66:true,52:true,13:true,20:true,62:true,88:true,21:true,57:false,37:true,63:true,11:true,17:true,64:false,48:true,36:true,69:true,87:true,60:false,42:false,68:true,40:true,70:true,19:true,39:true,32:true,83:true,12:true,59:true,8:true,15:true,31:true,44:true,6:true,84:false,61:false,72:true,2:false,26:false,35:false,9:false,75:false,76:false,28:false,65:false,29:false}},
+    {id:2,fecha:'2026-04-14',asistencia:{38:true,85:true,82:true,4:true,30:true,77:true,56:true,74:false,51:true,41:true,25:true,47:true,33:true,58:true,27:true,22:true,3:true,43:true,86:true,53:false,23:true,46:false,5:false,73:false,49:true,24:true,16:false,10:false,18:false,71:true,1:false,14:true,67:true,78:true,80:true,50:true,45:true,79:true,55:false,54:true,7:true,34:true,81:false,66:false,52:false,13:false,20:true,62:true,88:false,21:true,57:false,37:true,63:true,11:true,17:false,64:false,48:true,36:true,69:false,87:false,60:false,42:true,68:true,40:true,70:true,19:false,39:true,32:true,83:true,12:false,59:false,8:false,15:false,31:false,44:false,6:true,84:false,61:false,72:true,2:false,26:true,35:false,9:false,75:false,76:false,28:false,65:false,29:false}},
+    {id:3,fecha:'2026-04-16',asistencia:{38:true,85:true,82:true,4:false,30:true,77:true,56:true,74:true,51:true,41:true,25:true,47:true,33:true,58:true,27:true,22:true,3:true,43:true,86:true,53:true,23:true,46:true,5:true,73:false,49:false,24:true,16:false,10:true,18:true,71:true,1:true,14:true,67:false,78:true,80:false,50:true,45:true,79:true,55:true,54:true,7:true,34:false,81:true,66:true,52:true,13:true,20:true,62:true,88:true,21:false,57:false,37:true,63:true,11:true,17:true,64:false,48:true,36:true,69:true,87:true,60:true,42:false,68:true,40:true,70:false,19:true,39:true,32:true,83:true,12:true,59:false,8:true,15:true,31:false,44:false,6:true,84:true,61:false,72:true,2:false,26:true,35:true,9:true,75:false,76:true,28:false,65:false,29:false}},
+    {id:4,fecha:'2026-04-21',asistencia:{38:true,85:true,82:true,4:true,30:true,77:true,56:true,74:true,51:true,41:true,25:true,47:true,33:true,58:true,27:true,22:true,3:true,43:true,86:true,53:true,23:true,46:true,5:true,73:true,49:true,24:true,16:true,10:false,18:true,71:true,1:false,14:true,67:true,78:true,80:true,50:true,45:true,79:true,55:false,54:true,7:true,34:false,81:true,66:true,52:true,13:false,20:true,62:true,88:false,21:true,57:false,37:true,63:true,11:true,17:true,64:true,48:true,36:true,69:true,87:false,60:true,42:false,68:true,40:true,70:true,19:true,39:true,32:true,83:true,12:true,59:true,8:true,15:true,31:false,44:false,6:true,84:false,61:true,72:true,2:false,26:true,35:true,9:true,75:true,76:true,28:true,65:true,29:false}},
+    {id:5,fecha:'2026-04-23',asistencia:{38:true,85:true,82:false,4:true,30:true,77:true,56:true,74:true,51:true,41:true,25:true,47:false,33:true,58:true,27:true,22:true,3:true,43:true,86:true,53:true,23:true,46:true,5:true,73:true,49:false,24:true,16:false,10:true,18:true,71:true,1:false,14:true,67:true,78:true,80:true,50:true,45:true,79:true,55:true,54:true,7:true,34:false,81:true,66:false,52:false,13:false,20:true,62:true,88:true,21:true,57:true,37:true,63:true,11:true,17:true,64:true,48:true,36:true,69:true,87:true,60:true,42:false,68:false,40:true,70:false,19:true,39:true,32:true,83:false,12:false,59:true,8:false,15:false,31:false,44:false,6:true,84:false,61:true,72:true,2:false,26:true,35:false,9:true,75:true,76:false,28:true,65:false,29:false}},
+    {id:6,fecha:'2026-04-29',asistencia:{38:true,85:true,82:true,4:false,30:false,77:true,56:true,74:false,51:false,41:true,25:true,47:false,33:true,58:true,27:true,22:true,3:false,43:true,86:true,53:false,23:false,46:true,5:false,73:true,49:false,24:true,16:false,10:false,18:false,71:true,1:false,14:true,67:true,78:false,80:true,50:false,45:false,79:false,55:true,54:true,7:true,34:false,81:true,66:true,52:true,13:false,20:true,62:true,88:false,21:true,57:false,37:false,63:true,11:true,17:true,64:false,48:true,36:true,69:true,87:false,60:false,42:false,68:false,40:false,70:false,19:true,39:true,32:true,83:true,12:true,59:false,8:true,15:false,31:false,44:false,6:true,84:false,61:false,72:true,2:false,26:true,35:false,9:false,75:false,76:false,28:true,65:true,29:false}},
+    {id:7,fecha:'2026-05-05',asistencia:{38:true,85:true,82:true,4:true,30:true,77:true,56:true,74:true,51:true,41:true,25:true,47:true,33:true,58:true,27:true,22:true,3:true,43:true,86:true,53:true,23:true,46:true,5:true,73:true,49:false,24:true,16:true,10:true,18:true,71:true,1:false,14:true,67:true,78:true,80:true,50:true,45:true,79:true,55:true,54:true,7:true,34:true,81:true,66:true,52:true,13:false,20:true,62:false,88:false,21:true,57:true,37:true,63:true,11:false,17:true,64:true,48:true,36:true,69:true,87:false,60:false,42:false,68:true,40:true,70:true,19:true,39:true,32:true,83:true,12:true,59:true,8:true,15:true,31:false,44:false,6:true,84:false,61:true,72:true,2:false,26:true,35:false,9:true,75:true,76:true,28:true,65:true,29:false}},
+    {id:8,fecha:'2026-05-07',asistencia:{38:true,85:true,82:false,4:true,30:true,77:true,56:true,74:false,51:true,41:true,25:true,47:false,33:true,58:true,27:true,22:true,3:true,43:true,86:true,53:true,23:true,46:true,5:true,73:true,49:true,24:true,16:false,10:false,18:true,71:true,1:false,14:true,67:true,78:true,80:true,50:true,45:true,79:true,55:true,54:true,7:true,34:false,81:true,66:true,52:true,13:false,20:true,62:true,88:false,21:true,57:false,37:true,63:true,11:true,17:true,64:true,48:true,36:true,69:true,87:true,60:true,42:false,68:true,40:true,70:true,19:true,39:true,32:true,83:true,12:true,59:true,8:true,15:true,31:true,44:true,6:true,84:false,61:true,72:true,2:false,26:true,35:false,9:false,75:true,76:false,28:true,65:true,29:false}},
+    {id:9,fecha:'2026-05-12',asistencia:{38:true,85:true,82:true,4:true,30:true,77:true,56:true,74:false,51:true,41:true,25:true,47:true,33:true,58:false,27:true,22:true,3:true,43:true,86:true,53:true,23:true,46:true,5:false,73:true,49:true,24:true,16:false,10:true,18:true,71:true,1:false,14:true,67:true,78:false,80:true,50:true,45:true,79:true,55:true,54:true,7:true,34:false,81:true,66:false,52:false,13:true,20:true,62:true,88:true,21:true,57:false,37:true,63:true,11:true,17:true,64:true,48:true,36:true,69:true,87:false,60:true,42:false,68:true,40:true,70:true,19:true,39:true,32:true,83:true,12:true,59:true,8:false,15:true,31:true,44:true,6:true,84:false,61:true,72:true,2:true,26:true,35:false,9:false,75:false,76:true,28:true,65:true,29:true}},
+    {id:10,fecha:'2026-05-14',asistencia:{38:true,85:true,82:true,4:true,30:false,77:true,56:true,74:false,51:true,41:true,25:true,47:true,33:true,58:false,27:true,22:true,3:true,43:true,86:true,53:true,23:true,46:true,5:false,73:true,49:true,24:true,16:true,10:false,18:false,71:true,1:false,14:true,67:true,78:true,80:true,50:false,45:true,79:true,55:true,54:true,7:true,34:false,81:false,66:true,52:false,13:true,20:true,62:true,88:false,21:true,57:false,37:true,63:true,11:false,17:true,64:false,48:true,36:true,69:true,87:true,60:false,42:false,68:false,40:true,70:false,19:false,39:true,32:true,83:true,12:true,59:true,8:false,15:true,31:false,44:true,6:true,84:false,61:false,72:false,2:false,26:true,35:false,9:false,75:false,76:false,28:true,65:false,29:true}},
+    {id:11,fecha:'2026-05-19',asistencia:{38:true,85:true,82:true,4:true,30:true,77:true,56:true,74:false,51:true,41:true,25:false,47:false,33:true,58:true,27:true,22:true,3:false,43:true,86:true,53:true,23:true,46:true,5:false,73:false,49:true,24:true,16:true,10:true,18:true,71:true,1:false,14:true,67:true,78:true,80:false,50:false,45:true,79:true,55:true,54:false,7:true,34:false,81:true,66:true,52:false,13:false,20:true,62:true,88:true,21:true,57:false,37:false,63:true,11:true,17:true,64:false,48:true,36:true,69:true,87:false,60:true,42:false,68:false,40:true,70:true,19:true,39:true,32:true,83:true,12:true,59:false,8:false,15:true,31:true,44:true,6:false,84:false,61:false,72:true,2:false,26:false,35:false,9:false,75:false,76:false,28:true,65:true,29:true}},
+    {id:12,fecha:'2026-05-21',asistencia:{38:true,85:true,82:true,4:true,30:true,77:true,56:true,74:false,51:true,41:true,25:true,47:false,33:true,58:false,27:true,22:true,3:false,43:true,86:true,53:true,23:true,46:true,5:false,73:false,49:true,24:false,16:false,10:false,18:false,71:true,1:false,14:true,67:true,78:true,80:false,50:false,45:false,79:true,55:false,54:true,7:true,34:false,81:true,66:true,52:false,13:false,20:true,62:true,88:true,21:true,57:true,37:false,63:true,11:false,17:true,64:false,48:true,36:true,69:true,87:true,60:true,42:false,68:false,40:true,70:true,19:false,39:true,32:true,83:false,12:true,59:false,8:false,15:true,31:true,44:true,6:true,84:false,61:false,72:false,2:false,26:false,35:false,9:false,75:false,76:false,28:true,65:false,29:true}},
+    {id:13,fecha:'2026-05-25',asistencia:{38:true,85:true,82:true,4:false,30:false,77:true,56:true,74:false,51:true,41:true,25:true,47:false,33:true,58:false,27:true,22:true,3:false,43:true,86:true,53:true,23:false,46:true,5:false,73:false,49:false,24:false,16:false,10:true,18:false,71:true,1:false,14:true,67:false,78:false,80:false,50:false,45:false,79:true,55:true,54:true,7:true,34:false,81:false,66:true,52:false,13:false,20:true,62:true,88:true,21:true,57:false,37:false,63:true,11:false,17:true,64:false,48:true,36:true,69:true,87:false,60:false,42:false,68:false,40:false,70:true,19:true,39:true,32:true,83:true,12:false,59:true,8:false,15:false,31:true,44:false,6:true,84:false,61:false,72:false,2:false,26:false,35:false,9:false,75:false,76:false,28:true,65:true,29:true}},
+    {id:14,fecha:'2026-05-26',asistencia:{38:true,85:true,82:true,4:true,30:true,77:true,56:true,74:false,51:true,41:true,25:true,47:false,33:true,58:false,27:true,22:true,3:false,43:true,86:true,53:false,23:true,46:true,5:false,73:false,49:true,24:false,16:false,10:false,18:false,71:true,1:false,14:true,67:true,78:true,80:false,50:false,45:false,79:true,55:true,54:true,7:true,34:false,81:true,66:true,52:false,13:true,20:true,62:true,88:true,21:true,57:false,37:true,63:true,11:false,17:true,64:true,48:true,36:true,69:true,87:false,60:true,42:false,68:false,40:true,70:true,19:true,39:false,32:true,83:false,12:true,59:false,8:false,15:true,31:true,44:true,6:true,84:false,61:true,72:false,2:false,26:true,35:false,9:false,75:false,76:false,28:true,65:true,29:true}},
+    {id:15,fecha:'2026-05-28',asistencia:{38:true,85:true,82:true,4:true,30:true,77:true,56:true,74:false,51:true,41:true,25:true,47:false,33:true,58:true,27:true,22:true,3:false,43:true,86:true,53:true,23:true,46:true,5:false,73:false,49:true,24:false,16:false,10:false,18:false,71:true,1:false,14:true,67:true,78:true,80:true,50:false,45:false,79:false,55:false,54:true,7:true,34:false,81:true,66:true,52:false,13:true,20:true,62:true,88:true,21:true,57:true,37:false,63:true,11:false,17:true,64:true,48:true,36:true,69:true,87:true,60:true,42:false,68:false,40:true,70:true,19:true,39:true,32:true,83:false,12:true,59:false,8:false,15:true,31:true,44:true,6:true,84:false,61:false,72:false,2:false,26:true,35:false,9:false,75:false,76:false,28:true,65:true,29:true}}
+  ,
+    {id:16,fecha:'2026-06-02',asistencia:{83:false,30:false,84:false,88:true,31:false,57:false,39:true,35:false,72:true,41:true,19:true,45:true,27:true,20:true,14:true,76:false,36:false,5:false,67:true,73:false,48:true,49:false,85:true,33:true,78:true,58:true,89:true,90:true,34:false,8:false,63:true,60:true,86:true,55:true,92:false,43:true,6:true,32:true,40:true,79:true,80:true,50:false,3:false,81:true,15:false,77:true,42:false,56:true,38:true,74:false,59:false,46:true,10:true,21:false,1:false,91:true,28:true,71:true,22:false,93:false,51:true,47:false,26:true,25:true,94:true,70:true,9:false,68:false,52:false,64:false,69:true,53:true,61:false,82:true,54:true,7:true,95:false,29:true,24:false,16:false,37:true,23:true,65:true,17:true,66:false,11:false,75:false,13:false,4:true,18:true,12:true,44:false,87:false,62:true}},
+    {id:17,fecha:'2026-06-04',asistencia:{83:true,30:true,84:false,88:false,31:true,57:true,39:true,35:false,72:true,41:true,19:true,45:true,27:true,20:true,14:true,76:false,36:true,5:false,67:true,73:false,48:true,49:true,85:true,33:true,78:true,58:true,89:true,90:true,34:false,8:false,63:true,60:true,86:true,55:true,92:true,43:true,6:true,32:true,40:false,79:true,80:false,50:false,3:false,81:true,15:true,77:true,42:false,56:true,38:true,74:false,59:false,46:true,10:false,21:true,1:false,91:true,28:true,71:false,22:false,93:true,51:true,47:false,26:true,25:true,94:false,70:true,9:false,68:false,52:true,64:false,69:true,53:true,61:false,82:true,54:false,7:false,95:true,29:true,24:false,16:true,37:true,23:true,65:true,17:true,66:true,11:true,75:true,13:true,4:true,18:false,12:false,44:true,87:false,62:true}},
+    {id:18,fecha:'2026-06-09',asistencia:{83:false,30:true,84:false,88:false,31:true,57:false,39:false,35:false,72:true,41:true,19:false,45:true,27:true,20:true,14:true,76:true,36:true,5:false,67:true,73:false,48:true,49:true,85:true,33:true,78:true,58:true,89:true,90:true,34:false,8:false,63:true,60:true,86:true,55:true,92:true,43:true,6:true,32:true,40:true,79:true,80:true,50:false,3:false,81:false,15:false,77:true,42:false,56:true,38:true,74:false,59:true,46:true,10:false,21:true,1:false,91:true,28:true,71:true,22:true,93:false,51:false,47:false,26:true,25:true,94:true,70:true,9:false,68:false,52:false,64:true,69:true,53:false,61:false,82:true,54:false,7:true,95:true,29:true,24:false,16:false,37:true,23:true,65:true,17:true,66:true,11:false,75:true,13:true,4:true,18:false,12:false,44:false,87:false,62:true}},
+    {id:19,fecha:'2026-06-11',asistencia:{83:true,30:true,84:false,88:true,31:true,57:true,39:true,35:false,72:true,41:true,19:false,45:true,27:true,20:true,14:true,76:true,36:false,5:false,67:true,73:false,48:true,49:true,85:true,33:true,78:true,58:true,89:true,90:true,34:false,8:false,63:true,60:true,86:true,55:false,92:true,43:false,6:true,32:true,40:true,79:true,80:true,50:false,3:false,81:false,15:true,77:true,42:false,56:true,38:true,74:true,59:false,46:true,10:false,21:true,1:false,91:true,28:true,71:true,22:true,93:true,51:true,47:false,26:true,25:false,94:false,70:true,9:false,68:true,52:false,64:false,69:true,53:true,61:false,82:true,54:true,7:true,95:false,29:true,24:false,16:false,37:true,23:true,65:false,17:true,66:true,11:true,75:true,13:true,4:true,18:false,12:true,44:false,87:true,62:true}}
+  ],
+  nextSesionId:20,
+  lesiones:[],
+  nextLesionId:1,
+  tarjetas:[
+    {id:1,playerId:92,tipo:'amarilla',partido:'vs DOBS',plantel:'Primera',motivo:'',partidos:0,retorno:''},
+    {id:2,playerId:26,tipo:'amarilla',partido:'vs Old Macks',plantel:'Primera',motivo:'',partidos:0,retorno:''},
+    {id:3,playerId:48,tipo:'amarilla',partido:'vs Old Macks',plantel:'Primera',motivo:'',partidos:0,retorno:''},
+    {id:4,playerId:41,tipo:'amarilla',partido:'vs Old Boys',plantel:'Primera',motivo:'',partidos:0,retorno:''},
+    {id:5,playerId:85,tipo:'amarilla',partido:'vs Old Boys',plantel:'Primera',motivo:'',partidos:0,retorno:''},
+    {id:6,playerId:77,tipo:'amarilla',partido:'vs UC',plantel:'Primera',motivo:'',partidos:0,retorno:''},
+    {id:7,playerId:67,tipo:'amarilla',partido:'vs DOBS',plantel:'Primera',motivo:'',partidos:0,retorno:''},
+    {id:8,playerId:37,tipo:'amarilla',partido:'vs Sporting RC',plantel:'Primera',motivo:'',partidos:0,retorno:''},
+    {id:9,playerId:22,tipo:'amarilla',partido:'vs Old Macks',plantel:'Intermedia',motivo:'',partidos:0,retorno:''},
+    {id:10,playerId:18,tipo:'amarilla',partido:'vs Old Macks',plantel:'Intermedia',motivo:'',partidos:0,retorno:''},
+    {id:11,playerId:74,tipo:'amarilla',partido:'vs Old Johns',plantel:'Intermedia',motivo:'',partidos:0,retorno:''},
+    {id:12,playerId:30,tipo:'amarilla',partido:'vs Old Boys',plantel:'Intermedia',motivo:'',partidos:0,retorno:''},
+    {id:13,playerId:4,tipo:'amarilla',partido:'vs Old Boys',plantel:'Intermedia',motivo:'',partidos:0,retorno:''},
+    {id:14,playerId:62,tipo:'amarilla',partido:'vs UC',plantel:'Intermedia',motivo:'',partidos:0,retorno:''},
+    {id:15,playerId:32,tipo:'amarilla',partido:'vs UC',plantel:'Intermedia',motivo:'',partidos:0,retorno:''},
+    {id:16,playerId:80,tipo:'amarilla',partido:'vs Sporting RC',plantel:'Intermedia',motivo:'',partidos:0,retorno:''},
+    {id:17,playerId:36,tipo:'amarilla',partido:'vs DOBS',plantel:'Lions',motivo:'',partidos:0,retorno:''},
+    {id:18,playerId:55,tipo:'amarilla',partido:'vs DOBS',plantel:'Lions',motivo:'',partidos:0,retorno:''},
+    {id:19,playerId:55,tipo:'amarilla',partido:'vs PWCC',plantel:'Lions',motivo:'',partidos:0,retorno:''},
+    {id:20,playerId:57,tipo:'amarilla',partido:'vs Old Johns',plantel:'Lions',motivo:'',partidos:0,retorno:''},
+    {id:21,playerId:57,tipo:'amarilla',partido:'vs Old Boys',plantel:'Lions',motivo:'',partidos:0,retorno:''},
+    {id:22,playerId:19,tipo:'amarilla',partido:'vs Old Johns',plantel:'Lions',motivo:'',partidos:0,retorno:''},
+    {id:23,playerId:65,tipo:'amarilla',partido:'vs Old Johns',plantel:'Lions',motivo:'',partidos:0,retorno:''},
+    {id:24,playerId:12,tipo:'amarilla',partido:'vs UC',plantel:'Lions',motivo:'',partidos:0,retorno:''},
+    {id:25,playerId:55,tipo:'amarilla',partido:'vs PWCC',plantel:'Lions',motivo:'',partidos:0,retorno:''},
+    {id:26,playerId:85,tipo:'amarilla',partido:'vs UC',plantel:'Primera',motivo:'',partidos:0,retorno:''},
+    {id:27,playerId:22,tipo:'amarilla',partido:'vs UC',plantel:'Intermedia',motivo:'',partidos:0,retorno:''},
+    {id:28,playerId:30,tipo:'amarilla',partido:'vs DOBS',plantel:'Intermedia',motivo:'',partidos:0,retorno:''}
+  ],
+  nextTarjetaId:29,
+  ausencias:[],
+  nextAusenciaId:1,
+  partidos:[
+    {id:1,fecha:'2026-04-12',rival:'DOBS',condicion:'local',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
+    {id:2,fecha:'2026-05-08',rival:'Old Boys',condicion:'visita',planteles:[{nombre:'Primera',horario:'20:30'},{nombre:'Intermedia',horario:'18:30'},{nombre:'Pre Intermedia',horario:'16:30'}]},
+    {id:3,fecha:'2026-05-16',rival:'PWCC',condicion:'visita',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
+    {id:4,fecha:'2026-04-26',rival:'Old Johns',condicion:'local',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
+    {id:5,fecha:'2026-05-30',rival:'UC',condicion:'local',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
+    {id:6,fecha:'2026-06-07',rival:'Old Reds',condicion:'visita',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
+    {id:7,fecha:'2026-06-14',rival:'Sporting RC',condicion:'local',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
+    {id:8,fecha:'2026-06-21',rival:'Stade Francais',condicion:'visita',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
+    {id:9,fecha:'2026-07-05',rival:'DOBS',condicion:'visita',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
+    {id:10,fecha:'2026-07-12',rival:'Old Macks',condicion:'local',planteles:[{nombre:'Primera',horario:'13:30'},{nombre:'Intermedia',horario:'11:30'},{nombre:'Pre Intermedia',horario:'09:30'}]},
+    {id:11,fecha:'2026-07-18',rival:'Sporting RC',condicion:'visita',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
+    {id:12,fecha:'2026-08-01',rival:'Old Boys',condicion:'local',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
+    {id:13,fecha:'2026-08-09',rival:'PWCC',condicion:'local',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
+    {id:14,fecha:'2026-08-15',rival:'Stade Francais',condicion:'local',planteles:[{nombre:'Primera',horario:'15:00'},{nombre:'Intermedia',horario:'13:00'},{nombre:'Pre Intermedia',horario:'11:00'}]},
+    {id:15,fecha:'2026-08-22',rival:'Old Reds',condicion:'local',planteles:[{nombre:'Primera',horario:'15:00'},{nombre:'Intermedia',horario:'13:00'},{nombre:'Pre Intermedia',horario:'11:00'}]},
+    {id:16,fecha:'2026-09-05',rival:'Old Johns',condicion:'visita',planteles:[{nombre:'Primera',horario:'14:00'},{nombre:'Intermedia',horario:'12:00'},{nombre:'Pre Intermedia',horario:'10:00'}]},
+    {id:17,fecha:'2026-09-12',rival:'UC',condicion:'visita',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]}
+  ],
+  nextPartidoId:18
+};
+let state=null;
+
+// ---------- helpers ----------
+function formatDate(d){ if(!d) return '—'; const p=d.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
+function getInitials(name){ const w=(name||'').trim().split(/\s+/); return w.length>=2 ? (w[0][0]+w[1][0]).toUpperCase() : (name||'CL').substring(0,2).toUpperCase(); }
+function isAusenciaActiva(a){
+  if(a.fechaDesde && a.fechaDesde>TODAY) return false;
+  if(a.fechaHasta && a.fechaHasta<TODAY) return false;
+  return true;
+}
+function getPlayersInCategory(){ return state.players.filter(p=>p.categoria===state.selectedCategoria); }
+function playerById(id){ return state.players.find(p=>p.id===id); }
+function playerName(id){ const p=playerById(id); return p?p.name:'—'; }
+const STATUS_INFO={
+  disponible:{label:'Disponible',cls:'success'},
+  en_duda:{label:'En duda',cls:'warning'},
+  lesionado:{label:'Lesionado',cls:'danger'},
+  suspendido:{label:'Suspendido',cls:'info'},
+  ausente:{label:'Ausente',cls:'neutral'}
+};
+const STATUS_ORDER={lesionado:0,suspendido:1,ausente:2,en_duda:3,disponible:4};
+function badge(status){ const s=STATUS_INFO[status]; return '<span class="badge badge-'+s.cls+'">'+s.label+'</span>'; }
+function getLastUpdate(rec){ if(rec.comentarios&&rec.comentarios.length) return rec.comentarios[rec.comentarios.length-1]; return null; }
+function isSuspensionActiva(t){
+  if(!t.retorno) return true; // sin fecha de retorno definida, se considera vigente hasta que se edite
+  return t.retorno>=TODAY;
+}
+function getPlayerStatus(id){
+  const susp=state.tarjetas.find(t=>t.playerId===id && t.retorno && isSuspensionActiva(t));
+  if(susp) return {status:'suspendido', detail: susp.motivo+(susp.retorno?' · Vuelve: '+formatDate(susp.retorno):'')};
+  const activa=state.lesiones.find(l=>l.playerId===id && (l.estado==='activa'||l.estado==='en_revision'||l.estado==='recuperacion'));
+  if(activa){ const lu=getLastUpdate(activa); return {status:'lesionado', detail:(lu?lu.texto:activa.desc)+(activa.retorno?' · Retorno: '+formatDate(activa.retorno):'')}; }
+  const aus=state.ausencias.find(a=>a.playerId===id && isAusenciaActiva(a));
+  if(aus) return {status:'ausente', detail: aus.motivo+(aus.fechaHasta?' · Vuelve: '+formatDate(aus.fechaHasta):'')};
+  const rec=state.lesiones.find(l=>l.playerId===id && l.estado==='recuperacion');
+  if(rec){ const lu=getLastUpdate(rec); return {status:'en_duda', detail:(lu?lu.texto:rec.desc)+(rec.retorno?' · Retorno: '+formatDate(rec.retorno):'')}; }
+  return {status:'disponible', detail:''};
+}
+
+// ---------- sorting ----------
+const sortState={
+  plantel:{field:'jugador',dir:'asc'},
+  lesiones:{field:'jugador',dir:'asc'},
+  tarjetasAcum:{field:'jugador',dir:'asc'},
+  tarjetasIndiv:{field:'jugador',dir:'asc'},
+  ausencias:{field:'jugador',dir:'asc'},
+  asistSession:{field:'jugador',dir:'asc'}
+};
+function th(label,field,table){
+  const s=sortState[table];
+  const arrow = s.field===field ? (s.dir==='asc'?' ▲':' ▼') : '';
+  return '<th class="sortable" onclick="sortAndRender(\''+table+'\',\''+field+'\')">'+label+arrow+'</th>';
+}
+function sortAndRender(table,field){
+  const s=sortState[table];
+  if(s.field===field) s.dir = s.dir==='asc'?'desc':'asc';
+  else { s.field=field; s.dir='asc'; }
+  if(table==='plantel') renderPlantel();
+  else if(table==='lesiones') renderLesiones();
+  else if(table==='tarjetasAcum'||table==='tarjetasIndiv') renderTarjetas();
+  else if(table==='ausencias') renderAusencias();
+  else if(table==='asistSession') renderAsistSession();
+}
+function sortList(list,sortObj,comparators){
+  list.sort(comparators[sortObj.field]);
+  if(sortObj.dir==='desc') list.reverse();
+  return list;
+}
+
+// ---------- modal ----------
+function showModal(html){ document.getElementById('modal-body').innerHTML=html; document.getElementById('modal-overlay').style.display='flex'; }
+function closeModal(){ document.getElementById('modal-overlay').style.display='none'; }
+
+// ---------- nav / shell ----------
+const TABS=[['asistencia','Asistencia'],['plantel','Plantel'],['lesiones','Lesiones'],['tarjetas','Tarjetas'],['ausencias','Ausencias'],['reportes','Reportes'],['arusa','ARUSA'],['configuracion','Configuración']];
+let currentTab='asistencia';
+function renderSidebar(){
+  let html='<div class="brand"><div class="logo"><img src="'+CLUB_LOGO_DATA_URL+'" alt="Logo"/></div><div style="font-family:var(--f-display); font-size:18px; font-weight:600;">'+state.clubName+'</div></div>';
+  html+='<select id="cat-select" onchange="setCategoria(this.value)">'+state.categorias.map(c=>'<option'+(c===state.selectedCategoria?' selected':'')+'>'+c+'</option>').join('')+'</select>';
+  html+='<nav>';
+  TABS.forEach(([id,label])=>{ html+='<div class="nav-item'+(id===currentTab?' active':'')+'" onclick="switchTab(\''+id+'\')">'+label+'</div>'; });
+  html+='</nav>';
+  document.getElementById('sidebar').innerHTML=html;
+}
+function setCategoria(v){ state.selectedCategoria=v; saveState(); renderMain(); }
+function switchTab(id){ currentTab=id; closeModal(); closeSidebar(); renderSidebar(); renderMain(); }
+function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-scrim').classList.toggle('open'); }
+function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-scrim').classList.remove('open'); }
+function updateMobileHeader(){
+  const logoImg=document.querySelector('#mh-logo img');
+  if(logoImg) logoImg.src=CLUB_LOGO_DATA_URL;
+  const tabLabel=(TABS.find(t=>t[0]===currentTab)||[,'RugbyTrack'])[1];
+  document.getElementById('mh-title').textContent=tabLabel;
+}
+function renderMain(){
+  updateMobileHeader();
+  if(currentTab==='asistencia') renderAsistencia();
+  else if(currentTab==='plantel') renderPlantel();
+  else if(currentTab==='lesiones') renderLesiones();
+  else if(currentTab==='tarjetas') renderTarjetas();
+  else if(currentTab==='ausencias') renderAusencias();
+  else if(currentTab==='reportes') renderReportes();
+  else if(currentTab==='arusa') renderArusa();
+  else renderConfiguracion();
+}
+
+// ---------- Asistencia ----------
+let asistView={mode:'calendar', year:2026, month:5, sesionId:null};
+function renderAsistencia(){
+  if(asistView.mode==='session'){ renderAsistSession(); return; }
+  const year=asistView.year, month=asistView.month;
+  const firstDay=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const monthNames=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  let html='<h2>Asistencia — '+state.selectedCategoria+'</h2>';
+  html+='<div class="toolbar"><div class="cal-nav" style="display:flex; gap:10px; align-items:center;">'
+    +'<button onclick="calNav(-1)">‹</button>'
+    +'<strong style="font-family:var(--f-display); font-size:15px;">'+monthNames[month]+' '+year+'</strong>'
+    +'<button onclick="calNav(1)">›</button></div>'
+    +'<button class="primary" onclick="exportAsistencia()">Exportar a Excel</button></div>';
+  html+='<div class="toolbar" style="margin-top:-10px;"><span></span><button onclick="openPartidoModal(null)">+ Agregar partido</button></div>';
+  html+='<div class="calendar">';
+  ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'].forEach(d=>html+='<div class="cal-label">'+d+'</div>');
+  for(let i=0;i<firstDay;i++) html+='<div class="cal-day empty"></div>';
+  for(let d=1; d<=daysInMonth; d++){
+    const dateStr=year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const hasSession=state.sesiones.some(s=>s.fecha===dateStr && Object.values(s.asistencia).some(v=>v===true));
+    const dayMatches=state.partidos.filter(m=>m.fecha===dateStr);
+    const hasMatch=dayMatches.length>0;
+    let cls='cal-day';
+    if(hasSession) cls+=' has-session';
+    if(hasMatch) cls+=' has-match';
+    let matchInfo='';
+    if(hasMatch){
+      matchInfo='<div class="cal-day-match-info">'+dayMatches.map(m=>{
+        const condAbbr=m.condicion==='local'?'L':'V';
+        const rivalTxt=m.rival?m.rival:'Rival —';
+        return condAbbr+' · '+rivalTxt;
+      }).join('<br>')+'</div>';
+    }
+    html+='<div class="'+cls+'" onclick="openCalendarDate(\''+dateStr+'\')"><span class="cal-day-num">'+d+'</span>'+matchInfo+'</div>';
+  }
+  html+='</div>';
+  html+='<div style="margin-top:14px; font-size:12px; color:var(--text-secondary); display:flex; flex-direction:column; gap:6px;">'
+    +'<div style="display:flex; align-items:center; gap:6px;"><span style="display:inline-block; width:12px; height:12px; background:var(--highlight-bg); border:1px solid var(--highlight-border); border-radius:3px;"></span>Día con entrenamiento registrado</div>'
+    +'<div style="display:flex; align-items:center; gap:6px;"><span style="display:inline-block; width:12px; height:12px; background:var(--match-bg); border:1px solid var(--match-border); border-radius:3px;"></span>Día con partido registrado</div>'
+    +'<div>Haz clic en cualquier día para ver o crear la asistencia</div>'
+    +'</div>';
+  document.getElementById('main').innerHTML=html;
+}
+function calNav(delta){
+  let m=asistView.month+delta, y=asistView.year;
+  if(m<0){m=11;y--;} if(m>11){m=0;y++;}
+  asistView.month=m; asistView.year=y; renderAsistencia();
+}
+function openCalendarDate(dateStr){
+  let sess=state.sesiones.find(s=>s.fecha===dateStr);
+  if(!sess){
+    const asistencia={}; getPlayersInCategory().forEach(p=>asistencia[p.id]=false);
+    sess={id:state.nextSesionId++, fecha:dateStr, asistencia};
+    state.sesiones.push(sess); saveState();
+  }
+  asistView.mode='session'; asistView.sesionId=sess.id;
+  renderAsistencia();
+}
+function renderAsistSession(){
+  const sess=state.sesiones.find(s=>s.id===asistView.sesionId);
+  let plist=getPlayersInCategory().map(p=>({p, pres:sess.asistencia[p.id]===true}));
+  const asistSessionComparators={
+    jugador:(a,b)=>a.p.name.localeCompare(b.p.name),
+    asistencia:(a,b)=>(a.pres?1:0)-(b.pres?1:0)
+  };
+  sortList(plist, sortState.asistSession, asistSessionComparators);
+  const present=plist.filter(x=>x.pres).length;
+  const matches=state.partidos.filter(m=>m.fecha===sess.fecha);
+  let html='<a onclick="backToCalendar()">‹ Volver al calendario</a>';
+  html+='<h2 style="margin-top:12px;">Entrenamiento — '+formatDate(sess.fecha)+'</h2>';
+  matches.forEach(m=>{
+    const condLabel=m.condicion==='local'?'Local':'Visita';
+    const plantelesTxt=(m.planteles&&m.planteles.length)?m.planteles.map(pl=>pl.nombre+(pl.horario?' ('+pl.horario+')':'')).join(', '):'—';
+    html+='<div style="background:var(--match-bg); border:1px solid var(--match-border); border-radius:var(--r-md); padding:12px 16px; margin-bottom:14px; display:flex; flex-wrap:wrap; gap:16px; align-items:center;">'
+      +'<div style="font-weight:600; color:var(--match-border);">Partido '+condLabel+(m.rival?' vs '+m.rival:'')+'</div>'
+      +'<div style="font-size:13px; color:var(--text-secondary);">Planteles: '+plantelesTxt+'</div>'
+      +'<a onclick="openPartidoModal('+m.id+')" style="margin-left:auto; font-size:13px;">Editar</a>'
+      +'</div>';
+  });
+  html+='<div style="margin-bottom:14px;"><button onclick="openPartidoModal(null,\''+sess.fecha+'\')">+ Agregar partido para este día</button></div>';
+  html+='<div style="margin-bottom:14px; color:var(--text-secondary);">'+present+'/'+plist.length+' presentes</div>';
+  html+='<table class="asist-table"><thead><tr>'+th('Jugador','jugador','asistSession')+th('Asistencia','asistencia','asistSession')+'</tr></thead><tbody>';
+  plist.forEach(({p,pres})=>{
+    html+='<tr><td data-label="Jugador">'+p.name+'</td><td data-label="Asistencia"><button class="'+(pres?'primary':'')+'" onclick="toggleAsistSession('+p.id+')">'+(pres?'Presente':'Ausente')+'</button></td></tr>';
+  });
+  if(plist.length===0) html+='<tr><td colspan="2" style="text-align:center; color:var(--text-secondary); padding:20px;">Sin jugadores en esta categoría</td></tr>';
+  html+='</tbody></table>';
+  document.getElementById('main').innerHTML=html;
+}
+function backToCalendar(){ asistView.mode='calendar'; renderAsistencia(); }
+function toggleAsistSession(playerId){
+  const sess=state.sesiones.find(s=>s.id===asistView.sesionId);
+  sess.asistencia[playerId]=!sess.asistencia[playerId];
+  saveState(); renderAsistSession();
+}
+let __xlsxLoadingPromise=null;
+function ensureXLSX(){
+  if(typeof XLSX !== 'undefined') return Promise.resolve();
+  if(__xlsxLoadingPromise) return __xlsxLoadingPromise;
+  __xlsxLoadingPromise=new Promise(function(resolve,reject){
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload=function(){ resolve(); };
+    s.onerror=function(){ reject(new Error('No se pudo cargar la librería de Excel. Revisa tu conexión a internet.')); };
+    document.head.appendChild(s);
+  });
+  return __xlsxLoadingPromise;
+}
+function exportAsistencia(){
+  ensureXLSX().then(function(){
+    const sessions=getSesionesSinPartido().slice().sort((a,b)=>a.fecha.localeCompare(b.fecha));
+    const plist=getPlayersInCategory();
+    const header=['Jugador','Posición'].concat(sessions.map(s=>formatDate(s.fecha)));
+    const rows=plist.map(p=>[p.name,p.pos].concat(sessions.map(s=> s.asistencia[p.id] ? 'Presente':'Ausente')));
+    const ws=XLSX.utils.aoa_to_sheet([header].concat(rows));
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Asistencia');
+    XLSX.writeFile(wb,'asistencia_'+state.selectedCategoria.replace(/\s+/g,'_')+'.xlsx');
+  }).catch(function(e){ alert(e.message); });
+}
+
+// ---------- Partidos ----------
+let partidoModalPlanteles=[]; // [{nombre, horario}] mientras se edita el modal
+function openPartidoModal(id, fechaPreset){
+  const isNew=id===null;
+  const today=fechaPreset||getTodayStr();
+  const rec=isNew?{fecha:today,rival:'',condicion:'local',planteles:[]}:state.partidos.find(m=>m.id===id);
+  partidoModalPlanteles=(rec.planteles||[]).map(pl=> typeof pl==='string' ? {nombre:pl,horario:''} : {nombre:pl.nombre,horario:pl.horario||''});
+  renderPartidoModalContent(isNew, rec);
+}
+function renderPartidoModalContent(isNew, rec){
+  showModal('<h3 style="margin-bottom:14px;">'+(isNew?'Nuevo partido':'Editar partido')+'</h3>'
+    +'<div style="display:flex; gap:12px;"><div class="field" style="flex:1;"><label>Fecha</label><input id="pm-fecha" type="date" value="'+rec.fecha+'"/></div>'
+    +'<div class="field" style="flex:1;"><label>Condición</label><select id="pm-condicion"><option value="local"'+(rec.condicion==='local'?' selected':'')+'>Local</option><option value="visita"'+(rec.condicion==='visita'?' selected':'')+'>Visita</option></select></div></div>'
+    +'<div class="field"><label>Rival</label><input id="pm-rival" type="text" value="'+(rec.rival||'')+'" placeholder="Nombre del rival"/></div>'
+    +'<div class="field"><label>Planteles que juegan (cada uno con su horario)</label>'
+    +'<div id="pm-planteles-list">'+renderPartidoPlantelesList()+'</div>'
+    +'<div style="display:flex; gap:8px; margin-top:8px;">'
+    +'<input id="pm-nuevo-plantel" type="text" placeholder="Nombre del plantel (ej. Primera)" style="flex:2;"/>'
+    +'<input id="pm-nuevo-horario" type="time" style="flex:1;"/>'
+    +'<button onclick="addPartidoPlantel()" style="flex:0 0 auto;">+ Agregar</button>'
+    +'</div></div>'
+    +'<div style="display:flex; justify-content:space-between; margin-top:6px;">'
+    +(isNew?'<span></span>':'<button class="danger" onclick="deletePartido('+rec.id+')">Eliminar</button>')
+    +'<div style="display:flex; gap:8px;"><button onclick="closeModal()">Cancelar</button><button class="primary" onclick="savePartido('+(isNew?'null':rec.id)+')">Guardar</button></div></div>');
+}
+function renderPartidoPlantelesList(){
+  if(partidoModalPlanteles.length===0) return '<div style="font-size:12px; color:var(--text-secondary); padding:4px 0;">Aún no has agregado ningún plantel.</div>';
+  return partidoModalPlanteles.map((pl,i)=>'<div style="display:flex; align-items:center; gap:8px; padding:5px 0; font-size:13px;"><span style="flex:1;">'+pl.nombre+'</span><span style="color:var(--text-secondary);">'+(pl.horario||'sin horario')+'</span><a onclick="removePartidoPlantel('+i+')" style="color:var(--danger-text);">Quitar</a></div>').join('');
+}
+function addPartidoPlantel(){
+  const nombre=document.getElementById('pm-nuevo-plantel').value.trim();
+  const horario=document.getElementById('pm-nuevo-horario').value;
+  if(!nombre){ alert('Escribe el nombre del plantel.'); return; }
+  partidoModalPlanteles.push({nombre,horario});
+  document.getElementById('pm-planteles-list').innerHTML=renderPartidoPlantelesList();
+  document.getElementById('pm-nuevo-plantel').value='';
+  document.getElementById('pm-nuevo-horario').value='';
+}
+function removePartidoPlantel(i){
+  partidoModalPlanteles.splice(i,1);
+  document.getElementById('pm-planteles-list').innerHTML=renderPartidoPlantelesList();
+}
+function savePartido(id){
+  const fecha=document.getElementById('pm-fecha').value;
+  const rival=document.getElementById('pm-rival').value.trim();
+  const condicion=document.getElementById('pm-condicion').value;
+  const planteles=partidoModalPlanteles.slice();
+  if(!fecha){ alert('La fecha es obligatoria.'); return; }
+  if(id===null) state.partidos.push({id:state.nextPartidoId++, fecha, rival, condicion, planteles});
+  else { const rec=state.partidos.find(m=>m.id===id); Object.assign(rec,{fecha,rival,condicion,planteles}); }
+  saveState(); closeModal();
+  if(asistView.mode==='session') renderAsistSession(); else renderAsistencia();
+}
+function deletePartido(id){
+  state.partidos=state.partidos.filter(m=>m.id!==id); saveState(); closeModal();
+  if(asistView.mode==='session') renderAsistSession(); else renderAsistencia();
+}
+
+// ---------- Plantel ----------
+let plantelFilter='todos';
+let plantelPosFilter=[]; // array de posiciones seleccionadas, vacío = todas
+const plantelComparators={
+  jugador:(a,b)=>a.p.name.localeCompare(b.p.name),
+  posicion:(a,b)=>a.p.pos.localeCompare(b.p.pos),
+  estado:(a,b)=>STATUS_ORDER[a.st.status]-STATUS_ORDER[b.st.status],
+  asistencia:(a,b)=>(a.pct===null?-1:a.pct)-(b.pct===null?-1:b.pct)
+};
+function setPlantelFilter(v){ plantelFilter=v; renderPlantel(); }
+function getAllPositions(){
+  return Array.from(new Set(state.players.map(p=>p.pos))).sort();
+}
+function togglePlantelPosFilter(pos){
+  const idx=plantelPosFilter.indexOf(pos);
+  if(idx===-1) plantelPosFilter.push(pos); else plantelPosFilter.splice(idx,1);
+  renderPlantel();
+}
+function clearPlantelPosFilter(){ plantelPosFilter=[]; renderPlantel(); }
+function togglePosDropdown(){
+  const dd=document.getElementById('pos-filter-dropdown');
+  dd.style.display = dd.style.display==='block' ? 'none' : 'block';
+}
+function closeStatusTooltip(){
+  const existing=document.getElementById('status-tooltip');
+  if(existing) existing.remove();
+}
+function showStatusTooltip(anchorEl, text){
+  const wasOpenOnSameAnchor = anchorEl.dataset.tooltipOpen==='1';
+  document.querySelectorAll('[data-tooltip-open]').forEach(el=>delete el.dataset.tooltipOpen);
+  closeStatusTooltip();
+  if(wasOpenOnSameAnchor) return;
+  anchorEl.dataset.tooltipOpen='1';
+  const rect=anchorEl.getBoundingClientRect();
+  const tip=document.createElement('div');
+  tip.id='status-tooltip';
+  tip.textContent=text;
+  tip.style.position='fixed';
+  tip.style.background='var(--accent)';
+  tip.style.color='var(--accent-text)';
+  tip.style.padding='8px 12px';
+  tip.style.borderRadius='8px';
+  tip.style.fontSize='12px';
+  tip.style.maxWidth='240px';
+  tip.style.boxShadow='0 4px 16px rgba(0,0,0,0.25)';
+  tip.style.zIndex='100';
+  tip.style.lineHeight='1.4';
+  document.body.appendChild(tip);
+  const tipRect=tip.getBoundingClientRect();
+  let top=rect.bottom+6;
+  let left=rect.left;
+  if(left+tipRect.width>window.innerWidth-10) left=window.innerWidth-tipRect.width-10;
+  if(top+tipRect.height>window.innerHeight-10) top=rect.top-tipRect.height-6;
+  tip.style.top=top+'px';
+  tip.style.left=left+'px';
+}
+function getAttendancePct(playerId){
+  const sessions=getSesionesSinPartido();
+  if(!sessions.length) return null;
+  let total=0, present=0;
+  sessions.forEach(s=>{ if(s.asistencia[playerId]!==undefined){ total++; if(s.asistencia[playerId]) present++; } });
+  if(total===0) return null;
+  return Math.round((present/total)*100);
+}
+function getSesionesSinPartido(){
+  const fechasPartido=new Set(state.partidos.map(m=>m.fecha));
+  return state.sesiones.filter(s=>!fechasPartido.has(s.fecha));
+}
+function renderPlantel(){
+  const fullList=getPlayersInCategory().map(p=>({p, st:getPlayerStatus(p.id), pct:getAttendancePct(p.id)}));
+  const total=fullList.length;
+  const nLesionados=fullList.filter(x=>x.st.status==='lesionado').length;
+  const nAusentes=fullList.filter(x=>x.st.status==='ausente').length;
+  const nSuspendidos=fullList.filter(x=>x.st.status==='suspendido').length;
+  const nDisponibles=fullList.filter(x=>x.st.status==='disponible'||x.st.status==='en_duda').length;
+
+  let list=fullList.slice();
+  if(plantelFilter!=='todos') list=list.filter(x=>x.st.status===plantelFilter);
+  if(plantelPosFilter.length>0) list=list.filter(x=>plantelPosFilter.includes(x.p.pos));
+  sortList(list, sortState.plantel, plantelComparators);
+  const posLabel = plantelPosFilter.length===0 ? 'Todas las posiciones' : plantelPosFilter.length+' posición'+(plantelPosFilter.length===1?'':'es')+' seleccionada'+(plantelPosFilter.length===1?'':'s');
+
+  let html='<h2>Plantel — '+state.selectedCategoria+'</h2>';
+
+  // Indicadores siempre visibles (sobre el total del plantel, sin importar el filtro activo)
+  html+='<div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;">'
+    +'<div style="background:var(--bg); border:1px solid var(--border); border-radius:var(--r-md); padding:10px 16px; display:flex; flex-direction:column; align-items:center; min-width:80px;">'
+    +'<div style="font-size:22px; font-weight:700; font-family:var(--f-display);">'+total+'</div>'
+    +'<div style="font-size:11px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.04em;">Total</div></div>'
+    +'<div onclick="setPlantelFilter(\'disponible\')" style="background:var(--success-bg); border:1px solid var(--success-text); border-radius:var(--r-md); padding:10px 16px; display:flex; flex-direction:column; align-items:center; min-width:80px; cursor:pointer;" title="Filtrar disponibles">'
+    +'<div style="font-size:22px; font-weight:700; font-family:var(--f-display); color:var(--success-text);">'+nDisponibles+'</div>'
+    +'<div style="font-size:11px; color:var(--success-text); text-transform:uppercase; letter-spacing:0.04em;">Disponibles</div></div>'
+    +'<div onclick="setPlantelFilter(\'lesionado\')" style="background:var(--danger-bg); border:1px solid var(--danger-text); border-radius:var(--r-md); padding:10px 16px; display:flex; flex-direction:column; align-items:center; min-width:80px; cursor:pointer;" title="Filtrar lesionados">'
+    +'<div style="font-size:22px; font-weight:700; font-family:var(--f-display); color:var(--danger-text);">'+nLesionados+'</div>'
+    +'<div style="font-size:11px; color:var(--danger-text); text-transform:uppercase; letter-spacing:0.04em;">Lesionados</div></div>'
+    +'<div onclick="setPlantelFilter(\'ausente\')" style="background:var(--warning-bg); border:1px solid var(--warning-text); border-radius:var(--r-md); padding:10px 16px; display:flex; flex-direction:column; align-items:center; min-width:80px; cursor:pointer;" title="Filtrar ausentes">'
+    +'<div style="font-size:22px; font-weight:700; font-family:var(--f-display); color:var(--warning-text);">'+nAusentes+'</div>'
+    +'<div style="font-size:11px; color:var(--warning-text); text-transform:uppercase; letter-spacing:0.04em;">Ausentes</div></div>'
+    +'<div onclick="setPlantelFilter(\'suspendido\')" style="background:var(--neutral-bg); border:1px solid var(--neutral-text); border-radius:var(--r-md); padding:10px 16px; display:flex; flex-direction:column; align-items:center; min-width:80px; cursor:pointer;" title="Filtrar suspendidos">'
+    +'<div style="font-size:22px; font-weight:700; font-family:var(--f-display); color:var(--neutral-text);">'+nSuspendidos+'</div>'
+    +'<div style="font-size:11px; color:var(--neutral-text); text-transform:uppercase; letter-spacing:0.04em;">Suspendidos</div></div>'
+    +(plantelFilter!=='todos'?'<div onclick="setPlantelFilter(\'todos\')" style="background:var(--bg); border:1px solid var(--border); border-radius:var(--r-md); padding:10px 16px; display:flex; flex-direction:column; align-items:center; min-width:80px; cursor:pointer;">'
+    +'<div style="font-size:11px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.04em; margin-top:8px;">Ver todos</div></div>':'')
+    +'</div>'
+    +(plantelFilter!=='todos'?'<div style="font-size:13px; color:var(--text-secondary); margin-bottom:10px;">Mostrando '+list.length+' de '+total+' jugadores (filtro activo: '+STATUS_INFO[plantelFilter].label+')</div>':'');
+
+  html+='<div class="toolbar"><select onchange="setPlantelFilter(this.value)">'
+    +'<option value="todos">Todos los estados</option>'
+    +Object.entries(STATUS_INFO).map(([k,v])=>'<option value="'+k+'"'+(plantelFilter===k?' selected':'')+'>'+v.label+'</option>').join('')
+    +'</select>'
+    +'<div style="position:relative;">'
+    +'<button onclick="togglePosDropdown()" style="width:100%; text-align:left; display:flex; justify-content:space-between; align-items:center;">'+posLabel+' <span style="opacity:0.6;">▾</span></button>'
+    +'<div id="pos-filter-dropdown" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--bg); border:1px solid var(--border); border-radius:var(--r-md); box-shadow:0 4px 16px rgba(0,0,0,0.12); z-index:30; padding:8px; max-height:260px; overflow-y:auto;">'
+    +getAllPositions().map(pos=>'<label style="display:flex; align-items:center; gap:8px; padding:6px 4px; cursor:pointer; font-size:13px;"><input type="checkbox" style="width:auto;" '+(plantelPosFilter.includes(pos)?'checked':'')+' onchange="togglePlantelPosFilter(\''+pos+'\')"/>'+pos+'</label>').join('')
+    +'<div style="border-top:1px solid var(--border); margin-top:6px; padding-top:6px;"><a onclick="clearPlantelPosFilter()" style="font-size:12px;">Limpiar selección</a></div>'
+    +'</div></div>'
+    +'<button class="primary" onclick="openAddPlayerModal()">+ Agregar jugador</button></div>';
+  html+='<div class="table-scroll-wrap"><table class="table-scroll"><thead><tr>'+th('Jugador','jugador','plantel')+th('Estado','estado','plantel')+th('Posición','posicion','plantel')+th('% Asistencia','asistencia','plantel')+'</tr></thead><tbody>';
+  list.forEach(({p,st,pct})=>{
+    const detailEsc=(st.detail||'Sin novedades').replace(/'/g,'&#39;').replace(/"/g,'&quot;');
+    html+='<tr><td data-label="Jugador" style="white-space:nowrap;"><a onclick="openPlayerActions('+p.id+')" style="font-weight:600;">'+p.name+'</a></td><td data-label="Estado" style="white-space:nowrap;"><span style="cursor:pointer;" onclick="event.stopPropagation(); showStatusTooltip(this, \''+detailEsc+'\')">'+badge(st.status)+'</span></td><td data-label="Posición" style="color:var(--text-secondary); white-space:nowrap;">'+p.pos+'</td><td data-label="% Asistencia" style="color:var(--text-secondary); white-space:nowrap;">'+(pct===null?'—':pct+'%')+'</td></tr>';
+  });
+  if(list.length===0) html+='<tr><td colspan="4" style="text-align:center; color:var(--text-secondary); padding:20px;">Sin jugadores para este filtro</td></tr>';
+  html+='</tbody></table></div>';
+  document.getElementById('main').innerHTML=html;
+}
+function openPlayerActions(playerId){
+  const p=playerById(playerId);
+  if(!p) return;
+  const st=getPlayerStatus(playerId);
+  showModal(
+    '<h3 style="margin-bottom:4px;">'+p.name+'</h3>'
+    +'<div style="font-size:13px; color:var(--text-secondary); margin-bottom:18px;">'+p.pos+' · '+badge(st.status)+'</div>'
+    +'<div style="display:flex; flex-direction:column; gap:10px;">'
+    +'<button onclick="closeModal(); switchTab(\'lesiones\'); createNewLesionForPlayer('+playerId+')">🩹 Registrar lesión</button>'
+    +'<button onclick="closeModal(); switchTab(\'ausencias\'); openAusenciaModalForPlayer('+playerId+')">📅 Registrar ausencia</button>'
+    +'<button onclick="closeModal(); switchTab(\'tarjetas\'); openTarjetaModalForPlayer('+playerId+')">🟨 Registrar tarjeta</button>'
+    +'</div>'
+    +'<div style="margin-top:18px; border-top:1px solid var(--border); padding-top:14px; display:flex; justify-content:space-between;">'
+    +'<button class="danger" onclick="closeModal(); openAddPlayerModal('+playerId+')">Editar jugador</button>'
+    +'<button onclick="closeModal()">Cerrar</button>'
+    +'</div>'
+  );
+}
+function createNewLesionForPlayer(playerId){ setTimeout(()=>{ createNewLesion(playerId); }, 100); }
+function openAusenciaModalForPlayer(playerId){ setTimeout(()=>{ openAusenciaModal(null, playerId); }, 100); }
+function openTarjetaModalForPlayer(playerId){ setTimeout(()=>{ openTarjetaModal(null, null, playerId); }, 100); }
+function openAddPlayerModal(id){
+  const isNew = (id===undefined || id===null);
+  const rec = isNew ? {name:'', pos:'', categoria:state.selectedCategoria} : playerById(id);
+  const catOptions=state.categorias.map(c=>'<option'+(c===rec.categoria?' selected':'')+'>'+c+'</option>').join('');
+  showModal('<h3 style="margin-bottom:14px;">'+(isNew?'Agregar jugador':'Editar jugador')+'</h3>'
+    +'<div class="field"><label>Nombre y apellido</label><input id="np-name" type="text" value="'+(rec.name||'')+'"/></div>'
+    +'<div class="field"><label>Posición</label><input id="np-pos" type="text" value="'+(rec.pos||'')+'"/></div>'
+    +'<div class="field"><label>Categoría</label><select id="np-cat">'+catOptions+'</select></div>'
+    +'<div style="display:flex; justify-content:space-between;">'
+    +(isNew?'<span></span>':'<button class="danger" onclick="deletePlayer('+id+')">Eliminar jugador</button>')
+    +'<div style="display:flex; gap:8px;"><button onclick="closeModal()">Cancelar</button><button class="primary" onclick="saveNewPlayer('+(isNew?'null':id)+')">'+(isNew?'Agregar':'Guardar')+'</button></div></div>');
+}
+function saveNewPlayer(id){
+  const name=document.getElementById('np-name').value.trim();
+  const pos=document.getElementById('np-pos').value.trim();
+  const cat=document.getElementById('np-cat').value;
+  if(!name) return;
+  if(id===null){ state.players.push({id:state.nextPlayerId++, name, pos:pos||'Sin posición', categoria:cat}); }
+  else { const rec=playerById(id); Object.assign(rec,{name, pos:pos||'Sin posición', categoria:cat}); }
+  saveState(); closeModal(); renderMain();
+}
+function deletePlayer(id){
+  if(!confirm('¿Eliminar a este jugador? Esto no borra su historial de asistencia, lesiones o tarjetas ya registrado.')) return;
+  state.players=state.players.filter(p=>p.id!==id);
+  saveState(); closeModal(); renderMain();
+}
+
+
+// ---------- Lesiones ----------
+let lesionFichaId=null, lesionSubTab='activa', lesionPlazoFilter='todos';
+const lesionEstadoInfo={activa:{label:'Activa',cls:'danger'},en_revision:{label:'En revisión',cls:'info'},recuperacion:{label:'Vuelta progresiva',cls:'warning'},alta:{label:'Alta',cls:'success'}};
+const lesionEstadoOrder={activa:0,en_revision:1,recuperacion:2,alta:3};
+const lesionComparators={
+  jugador:(a,b)=>playerName(a.playerId).localeCompare(playerName(b.playerId)),
+  fecha:(a,b)=>(a.fecha||'').localeCompare(b.fecha||''),
+  estado:(a,b)=>lesionEstadoOrder[a.estado]-lesionEstadoOrder[b.estado],
+  retorno:(a,b)=>{
+    if(!a.retorno && !b.retorno) return 0;
+    if(!a.retorno) return 1;
+    if(!b.retorno) return -1;
+    return a.retorno.localeCompare(b.retorno);
+  }
+};
+function setLesionSubTab(v){ lesionSubTab=v; lesionPlazoFilter='todos'; renderLesiones(); }
+function setLesionPlazoFilter(v){ lesionPlazoFilter=v; renderLesiones(); }
+function createNewLesion(prePlayerId){
+  const p=prePlayerId ? playerById(prePlayerId) : getPlayersInCategory()[0];
+  const rec={id:state.nextLesionId++, playerId:p?p.id:null, desc:'', fecha:TODAY, estado:'activa', retorno:'', comentarios:[]};
+  state.lesiones.push(rec); saveState();
+  lesionFichaId=rec.id; renderLesiones();
+}
+function openLesionFicha(id){ lesionFichaId=id; renderLesiones(); }
+function backToLesiones(){ lesionFichaId=null; renderLesiones(); }
+function deleteLesion(id){ state.lesiones=state.lesiones.filter(l=>l.id!==id); saveState(); lesionFichaId=null; renderLesiones(); }
+function saveLesionFicha(id){
+  const rec=state.lesiones.find(l=>l.id===id);
+  rec.playerId=parseInt(document.getElementById('lf-player').value);
+  rec.desc=document.getElementById('lf-desc').value;
+  rec.fecha=document.getElementById('lf-fecha').value;
+  rec.estado=document.getElementById('lf-estado').value;
+  rec.retorno=document.getElementById('lf-retorno').value;
+  saveState(); lesionFichaId=null; renderLesiones();
+}
+function addLesionComentario(id){
+  const ta=document.getElementById('new-comment'); const text=ta.value.trim(); if(!text) return;
+  const rec=state.lesiones.find(l=>l.id===id);
+  rec.comentarios=rec.comentarios||[]; rec.comentarios.push({fecha:TODAY, texto:text});
+  saveState(); renderLesiones();
+}
+function renderLesiones(){
+  if(lesionFichaId!==null){ renderLesionFicha(); return; }
+  const allActive=state.lesiones.filter(l=>getPlayersInCategory().some(p=>p.id===l.playerId) && (l.estado==='activa'||l.estado==='en_revision'||l.estado==='recuperacion'));
+  const allAlta=state.lesiones.filter(l=>getPlayersInCategory().some(p=>p.id===l.playerId) && l.estado==='alta');
+  let list=lesionSubTab==='activa' ? allActive : allAlta;
+
+  // Filtro por plazo de recuperación (solo en tab activa)
+  if(lesionSubTab==='activa' && lesionPlazoFilter!=='todos'){
+    const hoy=new Date(TODAY);
+    list=list.filter(l=>{
+      if(!l.retorno) return lesionPlazoFilter==='sin_fecha';
+      const retorno=new Date(l.retorno);
+      const dias=Math.ceil((retorno-hoy)/(1000*60*60*24));
+      if(lesionPlazoFilter==='semana') return dias>=0 && dias<=7;
+      if(lesionPlazoFilter==='mes') return dias>=0 && dias<=30;
+      if(lesionPlazoFilter==='tres_meses') return dias>=0 && dias<=90;
+      if(lesionPlazoFilter==='anio') return dias>=0 && dias<=365;
+      return true;
+    });
+  }
+
+  sortList(list, sortState.lesiones, lesionComparators);
+  let html='<h2>Lesiones — '+state.selectedCategoria+'</h2>';
+  html+='<div class="toolbar"><div class="seg" style="display:flex; border:1px solid var(--border); border-radius:var(--r-md); overflow:hidden;">'
+    +'<button class="'+(lesionSubTab==='activa'?'primary':'')+'" style="flex:1; border-radius:0;" onclick="setLesionSubTab(\'activa\')">Activos <span class="badge badge-danger" style="margin-left:4px;">'+allActive.length+'</span></button>'
+    +'<button class="'+(lesionSubTab==='alta'?'primary':'')+'" style="flex:1; border-radius:0;" onclick="setLesionSubTab(\'alta\')">Alta <span class="badge badge-success" style="margin-left:4px;">'+allAlta.length+'</span></button>'
+    +'</div>';
+  if(lesionSubTab==='activa'){
+    html+='<select onchange="setLesionPlazoFilter(this.value)">'
+      +'<option value="todos"'+(lesionPlazoFilter==='todos'?' selected':'')+'>Todos los plazos</option>'
+      +'<option value="semana"'+(lesionPlazoFilter==='semana'?' selected':'')+'>Recuperan esta semana</option>'
+      +'<option value="mes"'+(lesionPlazoFilter==='mes'?' selected':'')+'>Recuperan este mes</option>'
+      +'<option value="tres_meses"'+(lesionPlazoFilter==='tres_meses'?' selected':'')+'>Recuperan en 3 meses</option>'
+      +'<option value="anio"'+(lesionPlazoFilter==='anio'?' selected':'')+'>Recuperan en un año</option>'
+      +'<option value="sin_fecha"'+(lesionPlazoFilter==='sin_fecha'?' selected':'')+'>Sin fecha de retorno</option>'
+      +'</select>';
+  }
+  html+='<button class="primary" onclick="createNewLesion()">+ Nueva lesión</button></div>';
+  html+='<div class="table-scroll-wrap"><table class="table-scroll"><thead><tr>'+th('Jugador','jugador','lesiones')+'<th>Descripción</th><th>Última actualización</th>'+th('Fecha','fecha','lesiones')+th('Estado','estado','lesiones')+th('Retorno','retorno','lesiones')+'<th></th></tr></thead><tbody>';
+  list.forEach(l=>{
+    const p=playerById(l.playerId); if(!p) return;
+    const s=lesionEstadoInfo[l.estado]; const lu=getLastUpdate(l);
+    html+='<tr><td data-label="Jugador">'+p.name+'</td>'
+      +'<td data-label="Descripción" style="color:var(--text-secondary);">'+(l.desc||'—')+'</td>'
+      +'<td data-label="Última actualización" style="color:var(--text-secondary);">'+(lu?formatDate(lu.fecha)+': '+lu.texto:'—')+'</td>'
+      +'<td data-label="Fecha" style="color:var(--text-secondary);">'+formatDate(l.fecha)+'</td>'
+      +'<td data-label="Estado"><span class="badge badge-'+s.cls+'">'+s.label+'</span></td>'
+      +'<td data-label="Retorno" style="color:var(--text-secondary);">'+(l.retorno?formatDate(l.retorno):'—')+'</td>'
+      +'<td><a onclick="openLesionFicha('+l.id+')">Editar</a></td></tr>';
+  });
+  if(list.length===0) html+='<tr><td colspan="7" style="text-align:center; color:var(--text-secondary); padding:20px;">Sin lesiones en esta pestaña</td></tr>';
+  html+='</tbody></table></div>';
+  document.getElementById('main').innerHTML=html;
+}
+function renderLesionFicha(){
+  const rec=state.lesiones.find(l=>l.id===lesionFichaId);
+  const p=playerById(rec.playerId);
+  const playerOptions=getPlayersInCategory().map(pl=>'<option value="'+pl.id+'"'+(pl.id===rec.playerId?' selected':'')+'>'+pl.name+'</option>').join('');
+  let html='<a onclick="backToLesiones()">‹ Volver a lesiones</a>';
+  html+='<h2 style="margin-top:12px;">'+(p?p.name:'')+'</h2>';
+  html+='<div style="color:var(--text-secondary); margin-bottom:18px;">'+(p?p.pos:'')+'</div>';
+  html+='<div class="field"><label>Jugador</label><select id="lf-player">'+playerOptions+'</select></div>';
+  html+='<div class="field"><label>Descripción</label><textarea id="lf-desc" rows="3">'+rec.desc+'</textarea></div>';
+  html+='<div style="display:flex; gap:14px;">'
+    +'<div class="field" style="flex:1;"><label>Fecha</label><input id="lf-fecha" type="date" value="'+rec.fecha+'"/></div>'
+    +'<div class="field" style="flex:1;"><label>Estado</label><select id="lf-estado">'
+    +Object.entries(lesionEstadoInfo).map(([k,v])=>'<option value="'+k+'"'+(rec.estado===k?' selected':'')+'>'+v.label+'</option>').join('')
+    +'</select></div></div>';
+  html+='<div class="field"><label>Fecha tentativa de retorno</label><input id="lf-retorno" type="date" value="'+rec.retorno+'"/></div>';
+  html+='<div style="display:flex; justify-content:space-between; margin-bottom:18px;"><button class="danger" onclick="deleteLesion('+rec.id+')">Eliminar lesión</button><button class="primary" onclick="saveLesionFicha('+rec.id+')">Guardar</button></div>';
+  html+='<h3 style="border-top:1px solid var(--border); padding-top:14px;">Actualizaciones</h3>';
+  if(rec.comentarios&&rec.comentarios.length){
+    rec.comentarios.forEach(c=>{ html+='<div style="padding:8px 0; border-bottom:1px solid var(--border);"><div style="font-size:12px; color:var(--text-secondary); margin-bottom:2px;">'+formatDate(c.fecha)+'</div>'+c.texto+'</div>'; });
+  } else html+='<div style="color:var(--text-secondary); padding:8px 0;">Sin actualizaciones aún</div>';
+  html+='<div class="field" style="margin-top:10px;"><textarea id="new-comment" rows="2" placeholder="Agregar actualización..."></textarea></div>';
+  html+='<div style="display:flex; justify-content:flex-end;"><button class="primary" onclick="addLesionComentario('+rec.id+')">Agregar comentario</button></div>';
+  document.getElementById('main').innerHTML=html;
+}
+
+// ---------- Tarjetas ----------
+let tarjetasSubTab='acumuladas';
+const tarjetaTipoInfo={amarilla:{label:'Amarilla',cls:'warning'},roja:{label:'Roja',cls:'danger'}};
+const acumComparators={
+  jugador:(a,b)=>a.p.name.localeCompare(b.p.name),
+  posicion:(a,b)=>a.p.pos.localeCompare(b.p.pos),
+  amarillas:(a,b)=>a.amarillas-b.amarillas,
+  rojas:(a,b)=>a.rojas-b.rojas,
+  susp:(a,b)=>a.susp-b.susp,
+  estado:(a,b)=>STATUS_ORDER[a.st.status]-STATUS_ORDER[b.st.status]
+};
+const indivComparators={
+  jugador:(a,b)=>playerName(a.playerId).localeCompare(playerName(b.playerId)),
+  tipo:(a,b)=>a.tipo.localeCompare(b.tipo),
+  partido:(a,b)=>(a.partido||'').localeCompare(b.partido||''),
+  susp:(a,b)=>a.partidos-b.partidos
+};
+let tarjetasPlantelFilter='todos';
+function setTarjetasPlantelFilter(v){ tarjetasPlantelFilter=v; renderTarjetas(); }
+function setTarjetasSubTab(t){ tarjetasSubTab=t; renderTarjetas(); }
+function renderTarjetas(){
+  let html='<h2>Tarjetas — '+state.selectedCategoria+'</h2>';
+  html+='<div class="toolbar"><div style="display:flex; gap:8px;">'
+    +'<button class="'+(tarjetasSubTab==='acumuladas'?'primary':'')+'" onclick="setTarjetasSubTab(\'acumuladas\')">Acumuladas</button>'
+    +'<button class="'+(tarjetasSubTab==='individualizada'?'primary':'')+'" onclick="setTarjetasSubTab(\'individualizada\')">Individualizada</button></div>'
+    +(tarjetasSubTab==='individualizada'?('<select onchange="setTarjetasPlantelFilter(this.value)" style="margin-left:8px;">'
+      +'<option value="todos">Todos los planteles</option>'
+      +['Primera','Intermedia','Lions'].map(pl=>'<option value="'+pl+'"'+(tarjetasPlantelFilter===pl?' selected':'')+'>'+pl+'</option>').join('')
+      +'</select><button class="primary" onclick="openTarjetaModal(null)">+ Nueva tarjeta</button>'):'')
+    +'</div>';
+  if(tarjetasSubTab==='acumuladas'){
+    let list=getPlayersInCategory()
+      .map(p=>{
+        const recs=state.tarjetas.filter(t=>t.playerId===p.id);
+        return {p, recs, amarillas:recs.filter(t=>t.tipo==='amarilla').length, rojas:recs.filter(t=>t.tipo==='roja').length, susp:recs.reduce((s,t)=>s+t.partidos,0), st:getPlayerStatus(p.id)};
+      })
+      .filter(r=>r.recs.length>0);
+    sortList(list, sortState.tarjetasAcum, acumComparators);
+    html+='<div class="table-scroll-wrap"><table class="table-scroll"><thead><tr>'+th('Jugador','jugador','tarjetasAcum')+th('Posición','posicion','tarjetasAcum')+th('Amarillas','amarillas','tarjetasAcum')+th('Rojas','rojas','tarjetasAcum')+th('Susp. acum.','susp','tarjetasAcum')+th('Estado','estado','tarjetasAcum')+'</tr></thead><tbody>';
+    list.forEach(r=>{ html+='<tr><td data-label="Jugador">'+r.p.name+'</td><td data-label="Posición" style="color:var(--text-secondary);">'+r.p.pos+'</td><td data-label="Amarillas">'+r.amarillas+'</td><td data-label="Rojas">'+r.rojas+'</td><td data-label="Susp. acum.">'+r.susp+'</td><td data-label="Estado">'+badge(r.st.status)+'</td></tr>'; });
+    if(list.length===0) html+='<tr><td colspan="6" style="text-align:center; color:var(--text-secondary); padding:20px;">Aún no hay jugadores con tarjetas registradas</td></tr>';
+    html+='</tbody></table></div>';
+  } else {
+    let list=state.tarjetas.filter(t=>getPlayersInCategory().some(p=>p.id===t.playerId));
+    if(tarjetasPlantelFilter!=='todos') list=list.filter(t=>t.plantel===tarjetasPlantelFilter);
+    sortList(list, sortState.tarjetasIndiv, indivComparators);
+    html+='<div class="table-scroll-wrap"><table class="table-scroll"><thead><tr>'+th('Jugador','jugador','tarjetasIndiv')+th('Tipo','tipo','tarjetasIndiv')+th('Partido','partido','tarjetasIndiv')+'<th>Plantel</th><th>Motivo</th>'+th('Susp.','susp','tarjetasIndiv')+'<th></th></tr></thead><tbody>';
+    list.forEach(t=>{
+      const p=playerById(t.playerId); const ti=tarjetaTipoInfo[t.tipo];
+      html+='<tr><td data-label="Jugador">'+p.name+'</td><td data-label="Tipo"><span class="badge badge-'+ti.cls+'">'+ti.label+'</span></td><td data-label="Partido" style="color:var(--text-secondary);">'+(t.partido||'—')+'</td><td data-label="Plantel" style="color:var(--text-secondary);">'+(t.plantel||'—')+'</td><td data-label="Motivo" style="color:var(--text-secondary);">'+(t.motivo||'—')+'</td><td data-label="Susp." style="color:var(--text-secondary);">'+t.partidos+'</td><td><a onclick="openTarjetaModal('+t.id+')">Editar</a></td></tr>';
+    });
+    if(list.length===0) html+='<tr><td colspan="7" style="text-align:center; color:var(--text-secondary); padding:20px;">Sin tarjetas</td></tr>';
+    html+='</tbody></table></div>';
+  }
+  document.getElementById('main').innerHTML=html;
+}
+function openTarjetaModal(id, fechaPreset, prePlayerId){
+  const isNew=id===null;
+  const defaultPlayerId=prePlayerId||(getPlayersInCategory()[0]||{}).id;
+  const rec=isNew?{playerId:defaultPlayerId,tipo:'amarilla',partido:'',plantel:'Primera',motivo:'',partidos:0,retorno:''}:state.tarjetas.find(t=>t.id===id);
+  const playerOptions=getPlayersInCategory().map(p=>'<option value="'+p.id+'"'+(p.id===rec.playerId?' selected':'')+'>'+p.name+'</option>').join('');
+  const plantelOptions=['Primera','Intermedia','Lions'].map(pl=>'<option'+(rec.plantel===pl?' selected':'')+'>'+pl+'</option>').join('');
+  showModal('<h3 style="margin-bottom:14px;">'+(isNew?'Nueva tarjeta':'Editar tarjeta')+'</h3>'
+    +'<div style="display:flex; gap:12px;"><div class="field" style="flex:1;"><label>Jugador</label><select id="tj-player">'+playerOptions+'</select></div>'
+    +'<div class="field" style="flex:1;"><label>Tipo</label><select id="tj-tipo"><option value="amarilla"'+(rec.tipo==='amarilla'?' selected':'')+'>Amarilla</option><option value="roja"'+(rec.tipo==='roja'?' selected':'')+'>Roja</option></select></div></div>'
+    +'<div style="display:flex; gap:12px;"><div class="field" style="flex:1;"><label>Partido</label><input id="tj-partido" type="text" value="'+(rec.partido||'')+'"/></div>'
+    +'<div class="field" style="flex:1;"><label>Plantel</label><select id="tj-plantel">'+plantelOptions+'</select></div></div>'
+    +'<div class="field"><label>Motivo</label><textarea id="tj-motivo" rows="2">'+(rec.motivo||'')+'</textarea></div>'
+    +'<div style="display:flex; gap:12px;"><div class="field" style="flex:1;"><label>Partidos de suspensión</label><input id="tj-partidos" type="number" min="0" value="'+rec.partidos+'"/></div>'
+    +'<div class="field" style="flex:1;"><label>Fecha de retorno</label><input id="tj-retorno" type="date" value="'+(rec.retorno||'')+'"/></div></div>'
+    +'<div style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">Si hay fecha de retorno, el jugador queda como "Suspendido" hasta esa fecha (se libera solo al pasar el día). El plantel es solo informativo, no cambia la categoría del jugador.</div>'
+    +'<div style="display:flex; justify-content:space-between;">'
+    +(isNew?'<span></span>':'<button class="danger" onclick="deleteTarjeta('+rec.id+')">Eliminar</button>')
+    +'<div style="display:flex; gap:8px;"><button onclick="closeModal()">Cancelar</button><button class="primary" onclick="saveTarjeta('+(isNew?'null':rec.id)+')">Guardar</button></div></div>');
+}
+function saveTarjeta(id){
+  const playerId=parseInt(document.getElementById('tj-player').value);
+  const tipo=document.getElementById('tj-tipo').value;
+  const partido=document.getElementById('tj-partido').value.trim();
+  const plantel=document.getElementById('tj-plantel').value;
+  const motivo=document.getElementById('tj-motivo').value.trim();
+  const partidos=parseInt(document.getElementById('tj-partidos').value)||0;
+  const retorno=document.getElementById('tj-retorno').value;
+  if(id===null) state.tarjetas.push({id:state.nextTarjetaId++, playerId, tipo, partido, plantel, motivo, partidos, retorno});
+  else { const rec=state.tarjetas.find(t=>t.id===id); Object.assign(rec,{playerId,tipo,partido,plantel,motivo,partidos,retorno}); }
+  saveState(); closeModal(); renderTarjetas();
+}
+function deleteTarjeta(id){ state.tarjetas=state.tarjetas.filter(t=>t.id!==id); saveState(); closeModal(); renderTarjetas(); }
+
+// ---------- Ausencias ----------
+const AUSENCIA_MOTIVOS=['Vacaciones','Trabajo','Estudios','Personal','Otro'];
+let ausenciaFilter='todas';
+const ausenciaComparators={
+  jugador:(a,b)=>playerName(a.playerId).localeCompare(playerName(b.playerId)),
+  motivo:(a,b)=>a.motivo.localeCompare(b.motivo),
+  fecha:(a,b)=>(a.fechaDesde||'').localeCompare(b.fechaDesde||'')
+};
+function setAusenciaFilter(v){ ausenciaFilter=v; renderAusencias(); }
+function renderAusencias(){
+  const all=state.ausencias.filter(a=>getPlayersInCategory().some(p=>p.id===a.playerId));
+  const activas=all.filter(a=>isAusenciaActiva(a));
+  const programadas=all.filter(a=>a.fechaDesde && a.fechaDesde>TODAY);
+  const pasadas=all.filter(a=>!isAusenciaActiva(a) && !(a.fechaDesde && a.fechaDesde>TODAY));
+  let list=ausenciaFilter==='pasadas' ? pasadas : ausenciaFilter==='programadas' ? programadas : activas;
+  sortList(list, sortState.ausencias, ausenciaComparators);
+  let html='<h2>Ausencias — '+state.selectedCategoria+'</h2>';
+  html+='<div class="toolbar"><div class="seg" style="display:flex; border:1px solid var(--border); border-radius:var(--r-md); overflow:hidden;">'
+    +'<button class="'+(ausenciaFilter==='activas'||ausenciaFilter==='todos'?'primary':'')+'" style="flex:1; border-radius:0;" onclick="setAusenciaFilter(\'activas\')">Activas <span class="badge badge-warning" style="margin-left:4px;">'+activas.length+'</span></button>'
+    +'<button class="'+(ausenciaFilter==='programadas'?'primary':'')+'" style="flex:1; border-radius:0;" onclick="setAusenciaFilter(\'programadas\')">Programadas <span class="badge badge-info" style="margin-left:4px;">'+programadas.length+'</span></button>'
+    +'<button class="'+(ausenciaFilter==='pasadas'?'primary':'')+'" style="flex:1; border-radius:0;" onclick="setAusenciaFilter(\'pasadas\')">Pasadas <span class="badge badge-neutral" style="margin-left:4px;">'+pasadas.length+'</span></button>'
+    +'</div><button class="primary" onclick="openAusenciaModal(null)">+ Nueva ausencia</button></div>';
+  html+='<table><thead><tr>'+th('Jugador','jugador','ausencias')+th('Motivo','motivo','ausencias')+th('Desde','fecha','ausencias')+'<th>Hasta</th><th>Notas</th><th></th></tr></thead><tbody>';
+  list.forEach(a=>{
+    const p=playerById(a.playerId);
+    html+='<tr><td data-label="Jugador">'+(p?p.name:'—')+'</td><td data-label="Motivo">'+a.motivo+'</td><td data-label="Desde" style="color:var(--text-secondary);">'+formatDate(a.fechaDesde)+'</td><td data-label="Hasta" style="color:var(--text-secondary);">'+(a.fechaHasta?formatDate(a.fechaHasta):'—')+'</td><td data-label="Notas" style="color:var(--text-secondary);">'+(a.notas||'—')+'</td><td><a onclick="openAusenciaModal('+a.id+')">Editar</a></td></tr>';
+  });
+  if(list.length===0) html+='<tr><td colspan="6" style="text-align:center; color:var(--text-secondary); padding:20px;">Sin ausencias</td></tr>';
+  html+='</tbody></table>';
+  document.getElementById('main').innerHTML=html;
+}
+function openAusenciaModal(id, prePlayerId){
+  const isNew=id===null;
+  const defaultPlayerId=prePlayerId||(getPlayersInCategory()[0]||{}).id;
+  const rec=isNew?{playerId:defaultPlayerId, motivo:'Vacaciones', fechaDesde:TODAY, fechaHasta:'', notas:''}:state.ausencias.find(a=>a.id===id);
+  const playerOptions=getPlayersInCategory().map(p=>'<option value="'+p.id+'"'+(p.id===rec.playerId?' selected':'')+'>'+p.name+'</option>').join('');
+  const motivoOptions=AUSENCIA_MOTIVOS.map(m=>'<option'+(rec.motivo===m?' selected':'')+'>'+m+'</option>').join('');
+  showModal('<h3 style="margin-bottom:14px;">'+(isNew?'Nueva ausencia':'Editar ausencia')+'</h3>'
+    +'<div style="display:flex; gap:12px;"><div class="field" style="flex:1;"><label>Jugador</label><select id="au-player">'+playerOptions+'</select></div>'
+    +'<div class="field" style="flex:1;"><label>Motivo</label><select id="au-motivo">'+motivoOptions+'</select></div></div>'
+    +'<div style="display:flex; gap:12px;"><div class="field" style="flex:1;"><label>Desde</label><input id="au-desde" type="date" value="'+(rec.fechaDesde||'')+'"/></div>'
+    +'<div class="field" style="flex:1;"><label>Hasta</label><input id="au-hasta" type="date" value="'+(rec.fechaHasta||'')+'"/></div></div>'
+    +'<div class="field"><label>Notas</label><textarea id="au-notas" rows="2">'+(rec.notas||'')+'</textarea></div>'
+    +'<div style="display:flex; justify-content:space-between;">'
+    +(isNew?'<span></span>':'<button class="danger" onclick="deleteAusencia('+rec.id+')">Eliminar</button>')
+    +'<div style="display:flex; gap:8px;"><button onclick="closeModal()">Cancelar</button><button class="primary" onclick="saveAusencia('+(isNew?'null':rec.id)+')">Guardar</button></div></div>');
+}
+function saveAusencia(id){
+  const playerId=parseInt(document.getElementById('au-player').value);
+  const motivo=document.getElementById('au-motivo').value;
+  const fechaDesde=document.getElementById('au-desde').value;
+  const fechaHasta=document.getElementById('au-hasta').value;
+  const notas=document.getElementById('au-notas').value.trim();
+  if(id===null) state.ausencias.push({id:state.nextAusenciaId++, playerId, motivo, fechaDesde, fechaHasta, notas});
+  else { const rec=state.ausencias.find(a=>a.id===id); Object.assign(rec,{playerId,motivo,fechaDesde,fechaHasta,notas}); }
+  saveState(); closeModal(); renderAusencias();
+}
+function deleteAusencia(id){ state.ausencias=state.ausencias.filter(a=>a.id!==id); saveState(); closeModal(); renderAusencias(); }
+
+// ---------- Reportes ----------
+function metricCard(label,value){ return '<div class="card"><div style="font-size:13px; color:var(--text-secondary); margin-bottom:6px;">'+label+'</div><div style="font-size:26px; font-weight:600; font-family:var(--f-display);">'+value+'</div></div>'; }
+// ---------- ARUSA ----------
+const ARUSA_BASE='https://arusa.cl';
+const ARUSA_TEAM_ID='8077044';
+const ARUSA_SEASON_ID='8826';
+const ARUSA_TOURNAMENT_ID='1328550';
+const ARUSA_PROXY='/.netlify/functions/arusa';
+let arusaPartidos=[];
+let arusaSelectedMatch=null;
+let arusaLoading=false;
+
+async function fetchArusaPartidos(){
+  const res=await fetch(ARUSA_PROXY+'?action=calendar');
+  if(!res.ok) throw new Error('Error '+res.status);
+  const data=await res.json();
+  const html=data.content||'';
+  const rows=html.match(/<tr[^>]*>\s*<td class="colstyle-equipo">([\s\S]*?)<\/tr>/g)||[];
+  const partidos=[];
+  rows.forEach(row=>{
+    const link=row.match(/href="(https:\/\/arusa\.cl\/es\/tournament\/(\d+)\/match\/(\d+)\/results)"/);
+    if(!link) return;
+    const url=link[1], torneoId=link[2], matchId=link[3];
+    const titles=row.match(/title="([^"]+)"/g)||[];
+    const clean=t=>t.replace(/title="/,'').replace(/"/,'').trim();
+    const allTitles=titles.map(clean).filter(t=>t&&t!=='Ver');
+    // El formato es: [categoria_con_fecha, equipo1, equipo2, cancha]
+    // Buscar la info de categoría/fecha/plantel en los atributos
+    const infoMatch=row.match(/([^&]+)&nbsp;&ndash;&nbsp;([^&]+)&nbsp;&ndash;&nbsp;(\d+\. Fecha \d+)/);
+    let horario='', categoria='', fecha_jornada='';
+    if(infoMatch){
+      horario=infoMatch[1].trim();
+      categoria=infoMatch[2].trim();
+      fecha_jornada=infoMatch[3].trim();
+    }
+    // Extraer fecha
+    const fechaMatch=row.match(/(\d{2}\/\d{2}\/\d{4})/);
+    const fecha=fechaMatch?fechaMatch[1]:'';
+    // Extraer equipos (ignorar categoría y cancha)
+    const equipos=allTitles.filter(t=>!t.includes('División')&&!t.includes('Nacional')&&!t.includes('Colegio')&&!t.includes('Club')&&!t.includes('Sporting Club')&&t.length>1).slice(0,2);
+    partidos.push({matchId,torneoId,url,equipos,horario,categoria,fecha_jornada,fecha});
+  });
+  return partidos;
+}
+
+async function fetchArusaPlantel(torneoId, matchId){
+  const res=await fetch(ARUSA_PROXY+'?action=plantel&torneo='+torneoId+'&match='+matchId);
+  if(!res.ok) throw new Error('Error '+res.status);
+  const data=await res.json();
+  const html=data.content||'';
+  // Extraer sección de COBS
+  const cobsStart=html.indexOf('<h4 class="padd padd-top padd-bottom h5">COBS</h4>');
+  if(cobsStart<0) return [];
+  const cobsHtml=html.slice(cobsStart);
+  const nextTeam=cobsHtml.indexOf('<h4',10);
+  const section=nextTeam>0?cobsHtml.slice(0,nextTeam):cobsHtml;
+  // Parsear jugadores
+  const rows=section.match(/<tr[^>]*>([\s\S]*?)<\/tr>/g)||[];
+  const jugadores=[];
+  rows.forEach(row=>{
+    const cells={};
+    const tdMatches=row.match(/<td[^>]*class="colstyle-([^"\s]+)[^"]*"[^>]*>([\s\S]*?)<\/td>/g)||[];
+    tdMatches.forEach(td=>{
+      const m=td.match(/<td[^>]*class="colstyle-([^"\s]+)[^"]*"[^>]*>([\s\S]*?)<\/td>/);
+      if(!m) return;
+      const col=m[1], val=m[2].replace(/<[^>]+>/g,'').trim().replace(/\s+/g,' ');
+      cells[col]=val;
+    });
+    if(cells['jugador']&&cells['jugador']!=='Jugador'){
+      jugadores.push({
+        nombre:cells['jugador']||'',
+        dorsal:cells['dorsal']||'',
+        titular:cells['titular']||'',
+        tries:cells['tries']||'',
+        amarillas:cells['tarjetas-amarillas']||'',
+        rojas:cells['tarjetas-rojas']||''
+      });
+    }
+  });
+  return jugadores;
+}
+
+async function renderArusa(){
+  document.getElementById('main').innerHTML='<h2>ARUSA — Planteles por partido</h2><div style="color:var(--text-secondary); padding:20px;">Cargando partidos...</div>';
+  try{
+    arusaPartidos=await fetchArusaPartidos();
+    renderArusaMain();
+  }catch(e){
+    document.getElementById('main').innerHTML='<h2>ARUSA — Planteles por partido</h2><div style="color:var(--danger-text); padding:20px;">Error al conectar con ARUSA: '+e.message+'</div>';
+  }
+}
+
+function renderArusaMain(){
+  let html='<h2>ARUSA — Planteles por partido</h2>';
+  if(!arusaPartidos.length){
+    html+='<div style="color:var(--text-secondary); padding:20px;">No se encontraron partidos.</div>';
+    document.getElementById('main').innerHTML=html; return;
+  }
+  html+='<div style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">'+arusaPartidos.length+' partidos encontrados en temporada 2026. Haz clic en uno para ver el plantel.</div>';
+  // Agrupar por fecha/jornada
+  const grupos={};
+  arusaPartidos.forEach(p=>{ const k=p.fecha_jornada||'Sin jornada'; if(!grupos[k]) grupos[k]=[]; grupos[k].push(p); });
+  Object.entries(grupos).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([jornada, partidos])=>{
+    html+='<div style="font-weight:600; font-family:var(--f-display); font-size:14px; margin:16px 0 8px; padding-bottom:4px; border-bottom:2px solid var(--accent); color:var(--accent);">'+jornada+'</div>';
+    html+='<div style="display:flex; flex-direction:column; gap:8px;">';
+    partidos.forEach(p=>{
+      const equipos=p.equipos.join(' vs ')||p.url.split('/match/')[1].split('/')[0];
+      const isSelected=arusaSelectedMatch&&arusaSelectedMatch.matchId===p.matchId;
+      html+='<div style="background:var(--bg); border:1px solid '+(isSelected?'var(--accent)':'var(--border)')+'; border-radius:var(--r-md); padding:12px 16px; cursor:pointer;" onclick="loadArusaPlantel(\''+p.torneoId+'\',\''+p.matchId+'\')">'
+        +'<div style="display:flex; justify-content:space-between; align-items:center;">'
+        +'<div><div style="font-weight:600;">'+equipos+'</div>'
+        +'<div style="font-size:12px; color:var(--text-secondary);">'+p.categoria+(p.horario?' · '+p.horario:'')+'</div></div>'
+        +'<div style="font-size:12px; color:var(--text-secondary);">'+p.fecha+'</div>'
+        +'</div>'
+        +(isSelected&&arusaSelectedMatch.jugadores?renderArusaPlantelInline(arusaSelectedMatch.jugadores):'')
+        +(isSelected&&!arusaSelectedMatch.jugadores?'<div style="padding-top:10px; color:var(--text-secondary); font-size:13px;">Cargando plantel...</div>':'')
+        +'</div>';
+    });
+    html+='</div>';
+  });
+  document.getElementById('main').innerHTML=html;
+}
+
+function renderArusaPlantelInline(jugadores){
+  if(!jugadores.length) return '<div style="padding-top:10px; color:var(--text-secondary); font-size:13px;">Sin plantel registrado.</div>';
+  let html='<div style="margin-top:12px; border-top:1px solid var(--border); padding-top:12px;">';
+  html+='<table style="width:100%; font-size:12px;"><thead><tr>'
+    +'<th style="text-align:left; padding:4px 8px; color:var(--text-secondary);">#</th>'
+    +'<th style="text-align:left; padding:4px 8px; color:var(--text-secondary);">Jugador</th>'
+    +'<th style="text-align:center; padding:4px 8px; color:var(--text-secondary);">Titular</th>'
+    +'<th style="text-align:center; padding:4px 8px; color:var(--text-secondary);">Tries</th>'
+    +'<th style="text-align:center; padding:4px 8px; color:var(--text-secondary);">TA</th>'
+    +'<th style="text-align:center; padding:4px 8px; color:var(--text-secondary);">TR</th>'
+    +'</tr></thead><tbody>';
+  jugadores.forEach(j=>{
+    const isTit=j.titular&&j.titular!=='‐';
+    html+='<tr style="background:'+(isTit?'var(--bg-secondary)':'transparent')+'">'
+      +'<td style="padding:4px 8px; color:var(--text-secondary);">'+j.dorsal+'</td>'
+      +'<td style="padding:4px 8px; font-weight:'+(isTit?'600':'400')+';">'+j.nombre+'</td>'
+      +'<td style="padding:4px 8px; text-align:center;">'+(isTit?'✓':'')+'</td>'
+      +'<td style="padding:4px 8px; text-align:center; color:var(--text-secondary);">'+(j.tries&&j.tries!=='‐'?j.tries:'')+'</td>'
+      +'<td style="padding:4px 8px; text-align:center; color:var(--warning-text);">'+(j.amarillas&&j.amarillas!=='‐'?j.amarillas:'')+'</td>'
+      +'<td style="padding:4px 8px; text-align:center; color:var(--danger-text);">'+(j.rojas&&j.rojas!=='‐'?j.rojas:'')+'</td>'
+      +'</tr>';
+  });
+  html+='</tbody></table></div>';
+  return html;
+}
+
+async function loadArusaPlantel(torneoId, matchId){
+  if(arusaSelectedMatch&&arusaSelectedMatch.matchId===matchId){ arusaSelectedMatch=null; renderArusaMain(); return; }
+  arusaSelectedMatch={matchId,torneoId,jugadores:null};
+  renderArusaMain();
+  try{
+    const jugadores=await fetchArusaPlantel(torneoId,matchId);
+    arusaSelectedMatch.jugadores=jugadores;
+    renderArusaMain();
+  }catch(e){
+    arusaSelectedMatch={matchId,torneoId,jugadores:[]};
+    renderArusaMain();
+    console.error('Error cargando plantel ARUSA:',e);
+  }
+}
+
+function renderReportes(){
+  const plist=getPlayersInCategory();
+  const disponibles=plist.filter(p=>{const s=getPlayerStatus(p.id).status; return s==='disponible'||s==='en_duda';}).length;
+  const lesionesActivas=state.lesiones.filter(l=>(l.estado==='activa'||l.estado==='en_revision'||l.estado==='recuperacion') && plist.some(p=>p.id===l.playerId)).length;
+  const ausenciasActivas=state.ausencias.filter(a=>isAusenciaActiva(a) && plist.some(p=>p.id===a.playerId)).length;
+  const sesiones=getSesionesSinPartido();
+  let pct=0; sesiones.forEach(s=>{ pct += plist.filter(p=>s.asistencia[p.id]).length/(plist.length||1); });
+  const asistPct = sesiones.length ? Math.round(pct/sesiones.length*100) : 0;
+  let totalPresentes=0; sesiones.forEach(s=>{ totalPresentes+=plist.filter(p=>s.asistencia[p.id]===true).length; });
+  const promPresentes = sesiones.length ? Math.round(totalPresentes/sesiones.length) : 0;
+
+  // Agrupar lesiones por posición
+  const lesionPorPos={};
+  state.lesiones.filter(l=>(l.estado==='activa'||l.estado==='en_revision'||l.estado==='recuperacion') && plist.some(p=>p.id===l.playerId)).forEach(l=>{
+    const p=playerById(l.playerId); if(!p) return;
+    lesionPorPos[p.pos]=(lesionPorPos[p.pos]||0)+1;
+  });
+
+  // Jugadores activos (disponibles o en duda) por posición
+  const posPorJugadorActivo={};
+  plist.filter(p=>{ const s=getPlayerStatus(p.id).status; return s==='disponible'||s==='en_duda'; }).forEach(p=>{
+    posPorJugadorActivo[p.pos]=(posPorJugadorActivo[p.pos]||0)+1;
+  });
+
+  // Agrupar tarjetas por plantel
+  const tarjetaPorPlantel={};
+  state.tarjetas.filter(t=>plist.some(p=>p.id===t.playerId)).forEach(t=>{
+    const pl=t.plantel||'Sin plantel';
+    tarjetaPorPlantel[pl]=(tarjetaPorPlantel[pl]||0)+1;
+  });
+  const tarjetaPorPos={};
+  state.tarjetas.filter(t=>plist.some(p=>p.id===t.playerId)).forEach(t=>{
+    const p=playerById(t.playerId); if(!p) return;
+    tarjetaPorPos[p.pos]=(tarjetaPorPos[p.pos]||0)+1;
+  });
+
+  const CHART_COLORS=['#322a4f','#c8333a','#5b5299','#e07b7b','#8b7fc2','#f0aaaa','#4a4180','#d45c5c','#9d93cf','#f5c0c0'];
+
+  function pieChart(dataObj, title){
+    const entries=Object.entries(dataObj).map(([k,v])=>[k,Number(v)]).sort((a,b)=>b[1]-a[1]);
+    const total=entries.reduce((s,[,v])=>s+v,0);
+    if(total===0) return '<div class="card" style="grid-column:span 1;"><div style="font-weight:600; margin-bottom:12px;">'+title+'</div><div style="color:var(--text-secondary); font-size:13px;">Sin datos</div></div>';
+    let svgPaths=''; let startAngle=0; let legendHtml='';
+    entries.forEach(([label,val],i)=>{
+      const frac=val/total; const angle=frac*2*Math.PI;
+      const x1=Math.cos(startAngle-Math.PI/2); const y1=Math.sin(startAngle-Math.PI/2);
+      const x2=Math.cos(startAngle+angle-Math.PI/2); const y2=Math.sin(startAngle+angle-Math.PI/2);
+      const large=angle>Math.PI?1:0; const color=CHART_COLORS[i%CHART_COLORS.length];
+      if(frac<1){
+        svgPaths+='<path d="M0,0 L'+x1*100+','+y1*100+' A100,100 0 '+large+',1 '+x2*100+','+y2*100+' Z" fill="'+color+'" stroke="var(--bg)" stroke-width="2"/>';
+      } else {
+        svgPaths+='<circle cx="0" cy="0" r="100" fill="'+color+'"/>';
+      }
+      startAngle+=angle;
+      legendHtml+='<div style="display:flex; align-items:center; gap:6px; font-size:12px; margin-bottom:4px;"><span style="width:10px;height:10px;border-radius:50%;background:'+color+';flex-shrink:0;"></span>'+label+' <span style="color:var(--text-secondary);">('+val+' — '+Math.round(frac*100)+'%)</span></div>';
+    });
+    return '<div class="card" style="grid-column:span 1;">'
+      +'<div style="font-weight:600; margin-bottom:12px; font-family:var(--f-display);">'+title+'</div>'
+      +'<div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap;">'
+      +'<svg viewBox="-110 -110 220 220" style="width:140px;height:140px;flex-shrink:0;"><g>'+svgPaths+'</g></svg>'
+      +'<div style="flex:1; min-width:120px;">'+legendHtml+'</div>'
+      +'</div></div>';
+  }
+
+  let html='<h2>Reportes — '+state.selectedCategoria+'</h2>';
+  html+='<div class="metrics-grid" style="display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:20px;">'
+    +metricCard('Asist. entrenamientos', asistPct+'%')
+    +metricCard('Prom. presentes/sesión', promPresentes+' jug.')
+    +metricCard('Disponibles', disponibles+'/'+plist.length)
+    +metricCard('Lesiones activas', lesionesActivas)
+    +metricCard('Ausencias activas', ausenciasActivas)
+    +'</div>';
+  html+='<div class="charts-grid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:14px;">'
+    +pieChart(posPorJugadorActivo, 'Posiciones activas (disponibles)')
+    +pieChart(lesionPorPos, 'Lesiones por posición')
+    +pieChart(tarjetaPorPos, 'Tarjetas por posición')
+    +pieChart(tarjetaPorPlantel, 'Tarjetas por plantel')
+    +'</div>';
+  document.getElementById('main').innerHTML=html;
+}
+
+// ---------- Configuración ----------
+function updateClubName(v){ state.clubName=v||'Club'; saveState(); renderSidebar(); renderConfiguracion(); }
+function addCategoria(){
+  const input=document.getElementById('new-cat'); const v=input.value.trim(); if(!v) return;
+  state.categorias.push(v); input.value=''; saveState(); renderSidebar(); renderConfiguracion();
+}
+function removeCategoria(idx){
+  const removed=state.categorias[idx];
+  state.categorias.splice(idx,1);
+  if(state.selectedCategoria===removed) state.selectedCategoria=state.categorias[0]||'';
+  saveState(); renderSidebar(); renderConfiguracion();
+}
+function saveNewPlayerFromConfig(){
+  const name=document.getElementById('cfg-name').value.trim();
+  const pos=document.getElementById('cfg-pos').value.trim();
+  const cat=document.getElementById('cfg-cat').value;
+  if(!name) return;
+  state.players.push({id:state.nextPlayerId++, name, pos:pos||'Sin posición', categoria:cat});
+  saveState();
+  document.getElementById('cfg-name').value=''; document.getElementById('cfg-pos').value='';
+  renderConfiguracion();
+}
+function bulkAddPlayers(){
+  const ta=document.getElementById('bulk-players');
+  const lines=ta.value.split('\n').map(l=>l.trim()).filter(Boolean);
+  let added=0;
+  lines.forEach(line=>{
+    const parts=line.split(',').map(s=>s.trim());
+    if(parts[0]){ state.players.push({id:state.nextPlayerId++, name:parts[0], pos:parts[1]||'Sin posición', categoria:state.selectedCategoria}); added++; }
+  });
+  ta.value=''; saveState();
+  document.getElementById('bulk-result').textContent=added+' jugador'+(added===1?'':'es')+' agregado'+(added===1?'':'s')+' a '+state.selectedCategoria+'.';
+}
+function handleExcelFile(event){
+  const file=event.target.files[0]; if(!file) return;
+  const lower=file.name.toLowerCase();
+  const reader=new FileReader();
+  function finish(added){ document.getElementById('bulk-result').textContent=added+' jugador'+(added===1?'':'es')+' agregado'+(added===1?'':'s')+' a '+state.selectedCategoria+'.'; saveState(); }
+  if(lower.endsWith('.csv')){
+    reader.onload=function(e){
+      const lines=e.target.result.split('\n').map(l=>l.trim()).filter(Boolean);
+      let added=0;
+      lines.forEach(line=>{
+        const parts=line.split(',').map(s=>s.trim());
+        if(parts[0] && parts[0].toLowerCase()!=='nombre'){ state.players.push({id:state.nextPlayerId++, name:parts[0], pos:parts[1]||'Sin posición', categoria:state.selectedCategoria}); added++; }
+      });
+      finish(added);
+    };
+    reader.readAsText(file);
+  } else {
+    reader.onload=function(e){
+      ensureXLSX().then(function(){
+        const data=new Uint8Array(e.target.result);
+        const wb=XLSX.read(data,{type:'array'});
+        const sheet=wb.Sheets[wb.SheetNames[0]];
+        const rows=XLSX.utils.sheet_to_json(sheet,{header:1});
+        let added=0;
+        rows.forEach(row=>{
+          if(!row[0]) return;
+          const name=String(row[0]).trim();
+          if(name.toLowerCase()==='nombre') return;
+          const pos=row[1]?String(row[1]).trim():'Sin posición';
+          state.players.push({id:state.nextPlayerId++, name, pos, categoria:state.selectedCategoria});
+          added++;
+        });
+        finish(added);
+      }).catch(function(err){ alert(err.message); });
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+function resetState(){
+  if(!confirm('¿Restablecer todos los datos a los valores de ejemplo? Se perderán los cambios.')) return;
+  state=JSON.parse(JSON.stringify(DEFAULT_STATE));
+  saveState(); render();
+}
+function renderConfiguracion(){
+  let html='<h2>Configuración</h2>';
+  html+='<h3>Datos del club</h3>';
+  html+='<div style="display:flex; gap:12px; align-items:center; margin-bottom:6px;"><div class="logo"><img src="'+CLUB_LOGO_DATA_URL+'" alt="Logo"/></div><div class="field" style="flex:1; margin-bottom:0;"><label>Nombre del club</label><input type="text" value="'+state.clubName+'" onchange="updateClubName(this.value)"/></div></div>';
+  html+='<div style="color:var(--text-secondary); font-size:12px;">El logo se genera con las iniciales del nombre.</div>';
+  html+='<h3>Equipos / categorías</h3>';
+  state.categorias.forEach((c,idx)=>{
+    html+='<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border);"><span>'+c+(c===state.selectedCategoria?' <span class="badge badge-info">activa</span>':'')+'</span><button class="danger" onclick="removeCategoria('+idx+')">Eliminar</button></div>';
+  });
+  html+='<div style="display:flex; gap:8px; margin-top:12px;"><input id="new-cat" type="text" placeholder="Ej: M16" style="flex:1;"/><button class="primary" onclick="addCategoria()">Agregar</button></div>';
+  html+='<h3>Agregar jugador</h3>';
+  html+='<div id="screen-cfg-addplayer" style="display:flex; gap:12px; align-items:flex-end;"><div class="field" style="flex:1; margin-bottom:0;"><label>Nombre y apellido</label><input id="cfg-name" type="text"/></div><div class="field" style="flex:1; margin-bottom:0;"><label>Posición</label><input id="cfg-pos" type="text"/></div><div class="field" style="flex:1; margin-bottom:0;"><label>Categoría</label><select id="cfg-cat">'+state.categorias.map(c=>'<option'+(c===state.selectedCategoria?' selected':'')+'>'+c+'</option>').join('')+'</select></div><button class="primary" onclick="saveNewPlayerFromConfig()">Agregar</button></div>';
+  html+='<h3>Carga masiva de jugadores</h3>';
+  html+='<div style="color:var(--text-secondary); font-size:12px; margin-bottom:8px;">Se agregarán a la categoría activa: <strong>'+state.selectedCategoria+'</strong></div>';
+  html+='<div class="field"><label>Subir archivo Excel o CSV (columnas: nombre, posición)</label><input type="file" accept=".xlsx,.xls,.csv" onchange="handleExcelFile(event)"/></div>';
+  html+='<div style="color:var(--text-secondary); font-size:12px; margin:12px 0 8px;">O pega una lista, un jugador por línea:</div>';
+  html+='<div class="field"><textarea id="bulk-players" rows="3" placeholder="Tomás Reyes, Pilar\nJoaquín Soto, 2da línea"></textarea></div>';
+  html+='<button class="primary" onclick="bulkAddPlayers()">Cargar lista</button>';
+  html+='<div id="bulk-result" style="font-size:12px; color:var(--text-secondary); margin-top:8px;"></div>';
+  html+='<h3 style="border-top:1px solid var(--border); padding-top:14px;">Jugadores registrados</h3>';
+  html+='<div class="field"><input id="cfg-search" type="text" placeholder="Buscar jugador..." oninput="renderConfigPlayerList(this.value)"/></div>';
+  html+='<div id="cfg-player-list"></div>';
+  html+='<h3 style="border-top:1px solid var(--border); padding-top:14px;">Datos de la app</h3>';
+  html+='<button class="danger" onclick="resetState()">Restablecer datos de ejemplo</button>';
+  document.getElementById('main').innerHTML=html;
+  renderConfigPlayerList('');
+}
+function renderConfigPlayerList(query){
+  const q=(query||'').trim().toLowerCase();
+  let list=state.players.slice().sort((a,b)=>a.name.localeCompare(b.name));
+  if(q) list=list.filter(p=>p.name.toLowerCase().includes(q));
+  let html='<table><thead><tr><th>Jugador</th><th>Posición</th><th>Categoría</th><th></th></tr></thead><tbody>';
+  list.forEach(p=>{
+    html+='<tr><td data-label="Jugador">'+p.name+'</td><td data-label="Posición" style="color:var(--text-secondary);">'+p.pos+'</td><td data-label="Categoría" style="color:var(--text-secondary);">'+p.categoria+'</td><td><a onclick="openAddPlayerModal('+p.id+')">Editar</a></td></tr>';
+  });
+  if(list.length===0) html+='<tr><td colspan="4" style="text-align:center; color:var(--text-secondary); padding:20px;">Sin resultados</td></tr>';
+  html+='</tbody></table>';
+  document.getElementById('cfg-player-list').innerHTML=html;
+}
+
+// ---------- storage (Supabase compartido) ----------
+const SUPABASE_URL='https://uoxgvpxebtztafcncqwq.supabase.co';
+const SUPABASE_KEY='sb_publishable_n2YbVaYaGAqCvWiPqfGRWw_nFDOvZwW';
+const SUPABASE_ROW_ID='main';
+let lastSyncedJson=null; // para evitar guardados/recargas innecesarias
+
+function hasLocalStorage(){ try{ const k='__test__'; localStorage.setItem(k,'1'); localStorage.removeItem(k); return true; }catch(e){ return false; } }
+
+async function saveState(){
+  const json=JSON.stringify(state);
+  try{ if(hasLocalStorage()) localStorage.setItem(STORAGE_KEY, json); }catch(e2){ console.error('localStorage error', e2); }
+  try{
+    const res=await fetch(SUPABASE_URL+'/rest/v1/rugbytrack_state', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'apikey':SUPABASE_KEY,
+        'Authorization':'Bearer '+SUPABASE_KEY,
+        'Prefer':'resolution=merge-duplicates'
+      },
+      body:JSON.stringify({id:SUPABASE_ROW_ID, data:state, updated_at:new Date().toISOString()})
+    });
+    if(!res.ok){ console.error('Supabase save failed:', res.status, await res.text()); }
+    else{ lastSyncedJson=json; }
+  }catch(e){ console.error('Supabase save error (sin conexión?)', e); }
+}
+
+async function fetchRemoteState(){
+  const res=await fetch(SUPABASE_URL+'/rest/v1/rugbytrack_state?id=eq.'+SUPABASE_ROW_ID+'&select=data,updated_at', {
+    headers:{ 'apikey':SUPABASE_KEY, 'Authorization':'Bearer '+SUPABASE_KEY }
+  });
+  if(!res.ok) throw new Error('Supabase fetch failed: '+res.status);
+  const rows=await res.json();
+  return rows.length>0 ? rows[0].data : null;
+}
+
+async function loadState(){
+  let loaded=false;
+  try{
+    const remote=await fetchRemoteState();
+    if(remote){ state=remote; loaded=true; lastSyncedJson=JSON.stringify(state); }
+  }catch(e){ console.error('Supabase load error (sin conexión? usando copia local)', e); }
+  if(!loaded){
+    try{
+      if(hasLocalStorage()){
+        const raw=localStorage.getItem(STORAGE_KEY);
+        if(raw){ state=JSON.parse(raw); loaded=true; }
+      }
+    }catch(e){ console.error('localStorage load error', e); }
+  }
+  if(!loaded){ state=JSON.parse(JSON.stringify(DEFAULT_STATE)); }
+  if(!state.ausencias) state.ausencias=JSON.parse(JSON.stringify(DEFAULT_STATE.ausencias));
+  if(state.nextAusenciaId===undefined) state.nextAusenciaId=DEFAULT_STATE.nextAusenciaId;
+  if(!state.partidos) state.partidos=JSON.parse(JSON.stringify(DEFAULT_STATE.partidos));
+  if(state.nextPartidoId===undefined) state.nextPartidoId=DEFAULT_STATE.nextPartidoId;
+  render();
+  startRemoteSync();
+}
+
+let syncInFlight=false;
+function startRemoteSync(){
+  setInterval(async function(){
+    if(syncInFlight) return;
+    const modalOpen=document.getElementById('modal-overlay') && document.getElementById('modal-overlay').style.display==='flex';
+    if(modalOpen) return;
+    syncInFlight=true;
+    try{
+      const remote=await fetchRemoteState();
+      if(remote){
+        const remoteJson=JSON.stringify(remote);
+        if(remoteJson!==lastSyncedJson){
+          state=remote;
+          lastSyncedJson=remoteJson;
+          try{ if(hasLocalStorage()) localStorage.setItem(STORAGE_KEY, remoteJson); }catch(e){}
+          render();
+        }
+      }
+    }catch(e){ /* silencioso: probablemente sin conexión momentánea */ }
+    syncInFlight=false;
+  }, 8000);
+}
+
+function render(){ renderSidebar(); renderMain(); }
+let __loaded=false;
+function safeRender(){ __loaded=true; try{ render(); }catch(e){ console.error('render error', e); document.getElementById('main').innerHTML='<p style="color:var(--danger-text);">Error al cargar. Intenta recargar la página.</p>'; } }
+setTimeout(function(){ if(!__loaded){ console.warn('Failsafe: forzando datos por defecto tras timeout'); state=JSON.parse(JSON.stringify(DEFAULT_STATE)); safeRender(); } }, 2500);
+try{
+  loadState().then(safeRender).catch(function(e){ console.error('loadState falló', e); if(!__loaded){ state=JSON.parse(JSON.stringify(DEFAULT_STATE)); safeRender(); } });
+}catch(e){
+  console.error('error sincrónico al iniciar', e);
+  state=JSON.parse(JSON.stringify(DEFAULT_STATE));
+  safeRender();
+}
+document.addEventListener('click', function(ev){
+  const dd=document.getElementById('pos-filter-dropdown');
+  if(dd && dd.style.display==='block' && !dd.contains(ev.target)){
+    const isToggleBtn=ev.target.closest && ev.target.closest('button') && ev.target.getAttribute('onclick')==='togglePosDropdown()';
+    if(!isToggleBtn) dd.style.display='none';
+  }
+  const tip=document.getElementById('status-tooltip');
+  if(tip && !tip.contains(ev.target)){
+    const isStatusAnchor=ev.target.closest && ev.target.closest('[onclick*="showStatusTooltip"]');
+    if(!isStatusAnchor){ tip.remove(); document.querySelectorAll('[data-tooltip-open]').forEach(el=>delete el.dataset.tooltipOpen); }
+  }
+});
+</script>
+</body></html>
