@@ -1112,14 +1112,19 @@ function deleteAusencia(id){ state.ausencias=state.ausencias.filter(a=>a.id!==id
 // ---------- Reportes ----------
 function metricCard(label,value){ return '<div class="card"><div style="font-size:13px; color:var(--text-secondary); margin-bottom:6px;">'+label+'</div><div style="font-size:26px; font-weight:600; font-family:var(--f-display);">'+value+'</div></div>'; }
 // ---------- ARUSA ----------
-const ARUSA_BASE='https://arusa.cl';
-const ARUSA_TEAM_ID='8077044';
-const ARUSA_SEASON_ID='8826';
-const ARUSA_TOURNAMENT_ID='1328550';
 const ARUSA_PROXY='/.netlify/functions/arusa';
+const ARUSA_SUPABASE_URL='https://uoxgvpxebtztafcncqwq.supabase.co';
+const ARUSA_SUPABASE_KEY='sb_publishable_n2YbVaYaGAqCvWiPqfGRWw_nFDOvZwW';
 let arusaPartidos=[];
 let arusaSelectedMatch=null;
-let arusaLoading=false;
+let arusaCachedPlanteles={}; // {matchId: {jugadores, updated_at}}
+
+// Convierte fecha DD/MM/YYYY a YYYY-MM-DD para comparar
+function arusaFechaToISO(f){
+  if(!f) return '';
+  const p=f.split('/');
+  return p.length===3 ? p[2]+'-'+p[1]+'-'+p[0] : '';
+}
 
 async function fetchArusaPartidos(){
   const res=await fetch(ARUSA_PROXY+'?action=calendar');
@@ -1135,23 +1140,20 @@ async function fetchArusaPartidos(){
     const titles=row.match(/title="([^"]+)"/g)||[];
     const clean=t=>t.replace(/title="/,'').replace(/"/,'').trim();
     const allTitles=titles.map(clean).filter(t=>t&&t!=='Ver');
-    // El formato es: [categoria_con_fecha, equipo1, equipo2, cancha]
-    // Buscar la info de categoría/fecha/plantel en los atributos
     const infoMatch=row.match(/([^&]+)&nbsp;&ndash;&nbsp;([^&]+)&nbsp;&ndash;&nbsp;(\d+\. Fecha \d+)/);
     let horario='', categoria='', fecha_jornada='';
-    if(infoMatch){
-      horario=infoMatch[1].trim();
-      categoria=infoMatch[2].trim();
-      fecha_jornada=infoMatch[3].trim();
-    }
-    // Extraer fecha
+    if(infoMatch){ horario=infoMatch[1].trim(); categoria=infoMatch[2].trim(); fecha_jornada=infoMatch[3].trim(); }
     const fechaMatch=row.match(/(\d{2}\/\d{2}\/\d{4})/);
     const fecha=fechaMatch?fechaMatch[1]:'';
-    // Extraer equipos (ignorar categoría y cancha)
-    const equipos=allTitles.filter(t=>!t.includes('División')&&!t.includes('Nacional')&&!t.includes('Colegio')&&!t.includes('Club')&&!t.includes('Sporting Club')&&t.length>1).slice(0,2);
-    partidos.push({matchId,torneoId,url,equipos,horario,categoria,fecha_jornada,fecha});
+    const equipos=allTitles.filter(t=>!t.includes('División')&&!t.includes('Nacional')&&!t.includes('Colegio')&&!t.includes('Club')&&t.length>1).slice(0,2);
+    // Determinar condición local/visita
+    const condicion=equipos[0]==='COBS'?'local':'visita';
+    const rival=equipos[0]==='COBS'?equipos[1]:equipos[0];
+    partidos.push({matchId,torneoId,url,equipos,rival,condicion,horario,categoria,fecha_jornada,fecha});
   });
-  return partidos;
+  // Solo partidos pasados (fecha < hoy)
+  const hoy=getTodayStr();
+  return partidos.filter(p=>{ const iso=arusaFechaToISO(p.fecha); return iso && iso<=hoy; });
 }
 
 async function fetchArusaPlantel(torneoId, matchId){
@@ -1159,13 +1161,11 @@ async function fetchArusaPlantel(torneoId, matchId){
   if(!res.ok) throw new Error('Error '+res.status);
   const data=await res.json();
   const html=data.content||'';
-  // Extraer sección de COBS
   const cobsStart=html.indexOf('<h4 class="padd padd-top padd-bottom h5">COBS</h4>');
   if(cobsStart<0) return [];
   const cobsHtml=html.slice(cobsStart);
   const nextTeam=cobsHtml.indexOf('<h4',10);
   const section=nextTeam>0?cobsHtml.slice(0,nextTeam):cobsHtml;
-  // Parsear jugadores
   const rows=section.match(/<tr[^>]*>([\s\S]*?)<\/tr>/g)||[];
   const jugadores=[];
   rows.forEach(row=>{
@@ -1174,26 +1174,34 @@ async function fetchArusaPlantel(torneoId, matchId){
     tdMatches.forEach(td=>{
       const m=td.match(/<td[^>]*class="colstyle-([^"\s]+)[^"]*"[^>]*>([\s\S]*?)<\/td>/);
       if(!m) return;
-      const col=m[1], val=m[2].replace(/<[^>]+>/g,'').trim().replace(/\s+/g,' ');
-      cells[col]=val;
+      cells[m[1]]=m[2].replace(/<[^>]+>/g,'').trim().replace(/\s+/g,' ');
     });
     if(cells['jugador']&&cells['jugador']!=='Jugador'){
-      jugadores.push({
-        nombre:cells['jugador']||'',
-        dorsal:cells['dorsal']||'',
-        titular:cells['titular']||'',
-        tries:cells['tries']||'',
-        amarillas:cells['tarjetas-amarillas']||'',
-        rojas:cells['tarjetas-rojas']||''
-      });
+      jugadores.push({nombre:cells['jugador']||'',dorsal:cells['dorsal']||'',titular:cells['titular']||'',tries:cells['tries']||'',amarillas:cells['tarjetas-amarillas']||'',rojas:cells['tarjetas-rojas']||''});
     }
   });
   return jugadores;
 }
 
+async function loadArusaCacheFromSupabase(){
+  try{
+    const res=await fetch(ARUSA_SUPABASE_URL+'/rest/v1/arusa_planteles?select=match_id,jugadores,updated_at',{headers:{'apikey':ARUSA_SUPABASE_KEY,'Authorization':'Bearer '+ARUSA_SUPABASE_KEY}});
+    if(!res.ok) return;
+    const rows=await res.json();
+    rows.forEach(r=>{ arusaCachedPlanteles[r.match_id]={jugadores:r.jugadores,updated_at:r.updated_at}; });
+  }catch(e){ console.error('Error cargando caché ARUSA:',e); }
+}
+
+async function saveArusaPlantelToSupabase(partido, jugadores){
+  const row={match_id:partido.matchId,torneo_id:partido.torneoId,fecha:arusaFechaToISO(partido.fecha),rival:partido.rival||'',categoria:partido.categoria||'',condicion:partido.condicion||'',jugadores,updated_at:new Date().toISOString()};
+  await fetch(ARUSA_SUPABASE_URL+'/rest/v1/arusa_planteles',{method:'POST',headers:{'apikey':ARUSA_SUPABASE_KEY,'Authorization':'Bearer '+ARUSA_SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify(row)});
+  arusaCachedPlanteles[partido.matchId]={jugadores,updated_at:row.updated_at};
+}
+
 async function renderArusa(){
   document.getElementById('main').innerHTML='<h2>ARUSA — Planteles por partido</h2><div style="color:var(--text-secondary); padding:20px;">Cargando partidos...</div>';
   try{
+    await loadArusaCacheFromSupabase();
     arusaPartidos=await fetchArusaPartidos();
     renderArusaMain();
   }catch(e){
@@ -1204,28 +1212,38 @@ async function renderArusa(){
 function renderArusaMain(){
   let html='<h2>ARUSA — Planteles por partido</h2>';
   if(!arusaPartidos.length){
-    html+='<div style="color:var(--text-secondary); padding:20px;">No se encontraron partidos.</div>';
+    html+='<div style="color:var(--text-secondary); padding:20px;">No se encontraron partidos jugados.</div>';
     document.getElementById('main').innerHTML=html; return;
   }
-  html+='<div style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">'+arusaPartidos.length+' partidos encontrados en temporada 2026. Haz clic en uno para ver el plantel.</div>';
-  // Agrupar por fecha/jornada
+  const conCache=Object.keys(arusaCachedPlanteles).length;
+  html+='<div style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">'+arusaPartidos.length+' partidos jugados · '+conCache+' planteles guardados. Haz clic en un partido para ver el plantel.</div>';
   const grupos={};
   arusaPartidos.forEach(p=>{ const k=p.fecha_jornada||'Sin jornada'; if(!grupos[k]) grupos[k]=[]; grupos[k].push(p); });
-  Object.entries(grupos).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([jornada, partidos])=>{
+  Object.entries(grupos).sort((a,b)=>b[0].localeCompare(a[0])).forEach(([jornada,partidos])=>{
     html+='<div style="font-weight:600; font-family:var(--f-display); font-size:14px; margin:16px 0 8px; padding-bottom:4px; border-bottom:2px solid var(--accent); color:var(--accent);">'+jornada+'</div>';
     html+='<div style="display:flex; flex-direction:column; gap:8px;">';
     partidos.forEach(p=>{
-      const equipos=p.equipos.join(' vs ')||p.url.split('/match/')[1].split('/')[0];
+      const equipos=p.equipos.join(' vs ')||p.matchId;
       const isSelected=arusaSelectedMatch&&arusaSelectedMatch.matchId===p.matchId;
-      html+='<div style="background:var(--bg); border:1px solid '+(isSelected?'var(--accent)':'var(--border)')+'; border-radius:var(--r-md); padding:12px 16px; cursor:pointer;" onclick="loadArusaPlantel(\''+p.torneoId+'\',\''+p.matchId+'\')">'
-        +'<div style="display:flex; justify-content:space-between; align-items:center;">'
-        +'<div><div style="font-weight:600;">'+equipos+'</div>'
+      const cached=arusaCachedPlanteles[p.matchId];
+      const cacheLabel=cached?'<span style="font-size:11px; color:var(--success-text); margin-left:8px;">✓ guardado</span>':'<span style="font-size:11px; color:var(--text-secondary); margin-left:8px;">sin guardar</span>';
+      html+='<div style="background:var(--bg); border:1px solid '+(isSelected?'var(--accent)':'var(--border)')+'; border-radius:var(--r-md); padding:12px 16px;">'
+        +'<div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleArusaPartido(\''+p.torneoId+'\',\''+p.matchId+'\')">'
+        +'<div><div style="font-weight:600;">'+equipos+cacheLabel+'</div>'
         +'<div style="font-size:12px; color:var(--text-secondary);">'+p.categoria+(p.horario?' · '+p.horario:'')+'</div></div>'
         +'<div style="font-size:12px; color:var(--text-secondary);">'+p.fecha+'</div>'
-        +'</div>'
-        +(isSelected&&arusaSelectedMatch.jugadores?renderArusaPlantelInline(arusaSelectedMatch.jugadores):'')
-        +(isSelected&&!arusaSelectedMatch.jugadores?'<div style="padding-top:10px; color:var(--text-secondary); font-size:13px;">Cargando plantel...</div>':'')
         +'</div>';
+      if(isSelected){
+        html+='<div style="margin-top:10px; display:flex; justify-content:flex-end;">'
+          +'<button onclick="event.stopPropagation(); actualizarPlantelARUSA(\''+p.torneoId+'\',\''+p.matchId+'\')" style="font-size:12px;">↻ Actualizar desde ARUSA</button>'
+          +'</div>';
+        if(arusaSelectedMatch.jugadores===null){
+          html+='<div style="padding-top:10px; color:var(--text-secondary); font-size:13px;">Cargando plantel...</div>';
+        } else {
+          html+=renderArusaPlantelInline(arusaSelectedMatch.jugadores);
+        }
+      }
+      html+='</div>';
     });
     html+='</div>';
   });
@@ -1233,9 +1251,9 @@ function renderArusaMain(){
 }
 
 function renderArusaPlantelInline(jugadores){
-  if(!jugadores.length) return '<div style="padding-top:10px; color:var(--text-secondary); font-size:13px;">Sin plantel registrado.</div>';
-  let html='<div style="margin-top:12px; border-top:1px solid var(--border); padding-top:12px;">';
-  html+='<table style="width:100%; font-size:12px;"><thead><tr>'
+  if(!jugadores||!jugadores.length) return '<div style="padding-top:10px; color:var(--text-secondary); font-size:13px;">Sin plantel registrado en ARUSA.</div>';
+  let html='<div style="margin-top:12px; border-top:1px solid var(--border); padding-top:12px; overflow-x:auto;">';
+  html+='<table style="width:100%; font-size:12px; min-width:300px;"><thead><tr>'
     +'<th style="text-align:left; padding:4px 8px; color:var(--text-secondary);">#</th>'
     +'<th style="text-align:left; padding:4px 8px; color:var(--text-secondary);">Jugador</th>'
     +'<th style="text-align:center; padding:4px 8px; color:var(--text-secondary);">Titular</th>'
@@ -1244,7 +1262,7 @@ function renderArusaPlantelInline(jugadores){
     +'<th style="text-align:center; padding:4px 8px; color:var(--text-secondary);">TR</th>'
     +'</tr></thead><tbody>';
   jugadores.forEach(j=>{
-    const isTit=j.titular&&j.titular!=='‐';
+    const isTit=j.titular&&j.titular!=='‐'&&j.titular!=='';
     html+='<tr style="background:'+(isTit?'var(--bg-secondary)':'transparent')+'">'
       +'<td style="padding:4px 8px; color:var(--text-secondary);">'+j.dorsal+'</td>'
       +'<td style="padding:4px 8px; font-weight:'+(isTit?'600':'400')+';">'+j.nombre+'</td>'
@@ -1258,13 +1276,17 @@ function renderArusaPlantelInline(jugadores){
   return html;
 }
 
-async function loadArusaPlantel(torneoId, matchId){
+async function toggleArusaPartido(torneoId, matchId){
   if(arusaSelectedMatch&&arusaSelectedMatch.matchId===matchId){ arusaSelectedMatch=null; renderArusaMain(); return; }
+  const cached=arusaCachedPlanteles[matchId];
+  if(cached){ arusaSelectedMatch={matchId,torneoId,jugadores:cached.jugadores}; renderArusaMain(); return; }
   arusaSelectedMatch={matchId,torneoId,jugadores:null};
   renderArusaMain();
   try{
+    const partido=arusaPartidos.find(p=>p.matchId===matchId);
     const jugadores=await fetchArusaPlantel(torneoId,matchId);
     arusaSelectedMatch.jugadores=jugadores;
+    if(partido) await saveArusaPlantelToSupabase(partido,jugadores);
     renderArusaMain();
   }catch(e){
     arusaSelectedMatch={matchId,torneoId,jugadores:[]};
@@ -1272,6 +1294,23 @@ async function loadArusaPlantel(torneoId, matchId){
     console.error('Error cargando plantel ARUSA:',e);
   }
 }
+
+async function actualizarPlantelARUSA(torneoId, matchId){
+  const partido=arusaPartidos.find(p=>p.matchId===matchId);
+  arusaSelectedMatch={matchId,torneoId,jugadores:null};
+  renderArusaMain();
+  try{
+    const jugadores=await fetchArusaPlantel(torneoId,matchId);
+    arusaSelectedMatch.jugadores=jugadores;
+    if(partido) await saveArusaPlantelToSupabase(partido,jugadores);
+    renderArusaMain();
+  }catch(e){
+    arusaSelectedMatch={matchId,torneoId,jugadores:arusaCachedPlanteles[matchId]?.jugadores||[]};
+    renderArusaMain();
+    console.error('Error actualizando plantel ARUSA:',e);
+  }
+}
+
 
 function renderReportes(){
   const plist=getPlayersInCategory();
