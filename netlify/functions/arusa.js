@@ -8,13 +8,13 @@ function request(url, options={}, postData=null) {
       path: urlObj.pathname + urlObj.search,
       method: options.method || 'GET',
       headers: options.headers || {},
-      timeout: 12000
+      timeout: 25000
     };
     const req = https.request(opts, res => {
       let body = '';
       const cookies = (res.headers['set-cookie'] || []).map(c => c.split(';')[0]).join('; ');
       res.on('data', d => body += d);
-      res.on('end', () => resolve({ body, cookies, status: res.statusCode, headers: res.headers }));
+      res.on('end', () => resolve({ body, cookies, status: res.statusCode }));
     });
     req.on('error', reject);
     req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
@@ -45,13 +45,11 @@ exports.handler = async (event) => {
       const { torneo, match } = event.queryStringParameters || {};
       if (!torneo || !match) throw new Error('Faltan parámetros');
  
-      // Paso 1: obtener sesión y CSRF
       const pageUrl = `https://arusa.cl/es/tournament/${torneo}/match/${match}/results`;
       const page = await request(pageUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
       const csrf = (page.body.match(/name="csrf_token" value="([^"]+)"/) || [])[1];
       if (!csrf) throw new Error('Sin CSRF token');
  
-      // Paso 2: pedir estadísticas con sesión
       const boundary = 'X' + Math.random().toString(36).slice(2);
       const body = `--${boundary}\r\nContent-Disposition: form-data; name="csrf_token"\r\n\r\n${csrf}\r\n--${boundary}\r\nContent-Disposition: form-data; name="tab"\r\n\r\nstatistics\r\n--${boundary}--`;
       const tabUrl = `https://arusa.cl/es/ajax/tournament/${torneo}/match/${match}/results/change-tab`;
