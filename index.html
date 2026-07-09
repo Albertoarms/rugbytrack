@@ -23,6 +23,23 @@
   --r-sm:6px; --r-md:8px; --r-lg:12px;
   --f-body:'Inter',system-ui,sans-serif; --f-display:'Oswald',var(--f-body);
 }
+@page { margin:10mm; size:A4 landscape; }
+@media print {
+  .sidebar, .mobile-header, .no-print { display:none !important; }
+  .print-only { display:block !important; }
+  #app { display:block !important; }
+  .main { padding:16px !important; }
+  body { background:white !important; color:black !important; font-size:11px !important; }
+  .ep-col-header { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .ep-desc-screen { display:none !important; }
+  .ep-desc-print { display:block !important; }
+  .ep-chip-pos-screen { display:none !important; }
+  .ep-chip-pos-print { display:inline !important; }
+  .ep-chip-desc { display:none !important; }
+  .ep-col { min-width:150px !important; max-width:175px !important; }
+  table { width:100% !important; }
+}
+
 @media (prefers-color-scheme: dark){
   :root{
     --bg:#0f172a; --bg-secondary:#1e293b; --border:#334155; --text:#e2e8f0; --text-secondary:#94a3b8;
@@ -79,7 +96,7 @@ tr:last-child td{border-bottom:none;}
 .field label{display:block; font-size:12px; color:var(--text-secondary); margin-bottom:4px;}
 .field input,.field select,.field textarea{width:100%;}
 .modal-overlay{position:fixed; inset:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:50;}
-.modal{background:var(--bg); border-radius:var(--r-lg); padding:22px; width:380px; max-height:85vh; overflow:auto;}
+.modal{background:var(--bg); border-radius:var(--r-lg); padding:22px; width:380px; max-height:85vh; overflow:auto; position:relative;}
 .calendar{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
 .cal-day{aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:var(--r-md); cursor:pointer; border:1px solid var(--border); background:var(--bg); padding:4px 2px; overflow:hidden;}
 .cal-day-num{font-size:inherit;}
@@ -109,7 +126,7 @@ tr:last-child td{border-bottom:none;}
   .sidebar .brand{display:none;}
   .sidebar-scrim{display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:50;}
   .sidebar-scrim.open{display:block;}
-  .main{padding:16px;}
+  .main{padding:16px; overflow-x:hidden;}
   .main h2{font-size:18px;}
   .toolbar{flex-direction:column; align-items:stretch;}
   .toolbar > *{width:100%;}
@@ -129,15 +146,15 @@ tr:last-child td{border-bottom:none;}
   td a, td button{margin-left:auto;}
 
   /* Asistencia: nombre y botón Presente/Ausente siempre en la misma línea, sin scroll */
-  .asist-table{display:block; width:100%; background:none;}
+  .asist-table{display:block; width:100%; background:none; box-sizing:border-box;}
   .asist-table thead{display:none;}
-  .asist-table tbody{display:block; width:100%;}
-  .asist-table tr{display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--bg); border:1px solid var(--border); border-radius:var(--r-lg); margin-bottom:8px; padding:10px 14px; width:100%;}
-  .asist-table td{display:block; padding:0; border-bottom:none; text-align:left;}
+  .asist-table tbody{display:block; width:100%; box-sizing:border-box;}
+  .asist-table tr{display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--bg); border:1px solid var(--border); border-radius:var(--r-lg); margin-bottom:8px; padding:10px 14px; width:100%; box-sizing:border-box;}
+  .asist-table td{display:block; padding:0; border-bottom:none; text-align:left; box-sizing:border-box;}
   .asist-table td:before{content:none;}
   .asist-table td:first-child{font-weight:600; font-size:15px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .asist-table td:last-child{flex:0 0 auto; width:auto;}
-  .asist-table td button{margin-left:0;}
+  .asist-table td button{margin-left:0; white-space:nowrap;}
 
   /* Tables marked .table-scroll -> real columns with horizontal scroll (Plantel, Lesiones, Tarjetas) */
   .table-scroll-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid var(--border); border-radius:var(--r-lg);}
@@ -186,8 +203,8 @@ tr:last-child td{border-bottom:none;}
 </div>
 <div id="sidebar-scrim" class="sidebar-scrim" onclick="closeSidebar()"></div>
 <div id="app">
-  <div id="sidebar" class="sidebar"><div class="brand"><div class="logo"><img src="" alt="Logo"></div><div style="font-family:var(--f-display); font-size:18px; font-weight:600;">COBS</div></div><select id="cat-select" onchange="setCategoria(this.value)"><option selected="">Primera</option></select><nav><div class="nav-item active" onclick="switchTab('asistencia')">Asistencia</div><div class="nav-item" onclick="switchTab('plantel')">Plantel</div><div class="nav-item" onclick="switchTab('lesiones')">Lesiones</div><div class="nav-item" onclick="switchTab('tarjetas')">Tarjetas</div><div class="nav-item" onclick="switchTab('ausencias')">Ausencias</div><div class="nav-item" onclick="switchTab('reportes')">Reportes</div><div class="nav-item" onclick="switchTab('arusa')">ARUSA</div><div class="nav-item" onclick="switchTab('configuracion')">Configuración</div></nav></div>
-  <div id="main" class="main"><h2>Asistencia — Primera</h2><div class="toolbar"><div class="cal-nav" style="display:flex; gap:10px; align-items:center;"><button onclick="calNav(-1)">‹</button><strong style="font-family:var(--f-display); font-size:15px;">Junio 2026</strong><button onclick="calNav(1)">›</button></div><button class="primary" onclick="exportAsistencia()">Exportar a Excel</button></div><div class="toolbar" style="margin-top:-10px;"><span></span><button onclick="openPartidoModal(null)">+ Agregar partido</button></div><div class="calendar"><div class="cal-label">Dom</div><div class="cal-label">Lun</div><div class="cal-label">Mar</div><div class="cal-label">Mié</div><div class="cal-label">Jue</div><div class="cal-label">Vie</div><div class="cal-label">Sáb</div><div class="cal-day empty"></div><div class="cal-day" onclick="openCalendarDate('2026-06-01')"><span class="cal-day-num">1</span></div><div class="cal-day has-session" onclick="openCalendarDate('2026-06-02')"><span class="cal-day-num">2</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-03')"><span class="cal-day-num">3</span></div><div class="cal-day has-session" onclick="openCalendarDate('2026-06-04')"><span class="cal-day-num">4</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-05')"><span class="cal-day-num">5</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-06')"><span class="cal-day-num">6</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-07')"><span class="cal-day-num">7</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-08')"><span class="cal-day-num">8</span></div><div class="cal-day has-session" onclick="openCalendarDate('2026-06-09')"><span class="cal-day-num">9</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-10')"><span class="cal-day-num">10</span></div><div class="cal-day has-session" onclick="openCalendarDate('2026-06-11')"><span class="cal-day-num">11</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-12')"><span class="cal-day-num">12</span></div><div class="cal-day has-match" onclick="openCalendarDate('2026-06-13')"><span class="cal-day-num">13</span><div class="cal-day-match-info">L · Stade</div></div><div class="cal-day" onclick="openCalendarDate('2026-06-14')"><span class="cal-day-num">14</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-15')"><span class="cal-day-num">15</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-16')"><span class="cal-day-num">16</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-17')"><span class="cal-day-num">17</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-18')"><span class="cal-day-num">18</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-19')"><span class="cal-day-num">19</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-20')"><span class="cal-day-num">20</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-21')"><span class="cal-day-num">21</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-22')"><span class="cal-day-num">22</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-23')"><span class="cal-day-num">23</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-24')"><span class="cal-day-num">24</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-25')"><span class="cal-day-num">25</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-26')"><span class="cal-day-num">26</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-27')"><span class="cal-day-num">27</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-28')"><span class="cal-day-num">28</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-29')"><span class="cal-day-num">29</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-30')"><span class="cal-day-num">30</span></div></div><div style="margin-top:14px; font-size:12px; color:var(--text-secondary); display:flex; flex-direction:column; gap:6px;"><div style="display:flex; align-items:center; gap:6px;"><span style="display:inline-block; width:12px; height:12px; background:var(--highlight-bg); border:1px solid var(--highlight-border); border-radius:3px;"></span>Día con entrenamiento registrado</div><div style="display:flex; align-items:center; gap:6px;"><span style="display:inline-block; width:12px; height:12px; background:var(--match-bg); border:1px solid var(--match-border); border-radius:3px;"></span>Día con partido registrado</div><div>Haz clic en cualquier día para ver o crear la asistencia</div></div></div>
+  <div id="sidebar" class="sidebar"><div class="brand"><div class="logo"><img src="" alt="Logo"></div><div style="font-family:var(--f-display); font-size:18px; font-weight:600;">COBS</div></div><select id="cat-select" onchange="setCategoria(this.value)"><option selected="">Adulto</option></select><nav><div class="nav-item active" onclick="switchTab('asistencia')">Asistencia</div><div class="nav-item" onclick="switchTab('plantel')">Plantel</div><div class="nav-item" onclick="switchTab('lesiones')">Lesiones</div><div class="nav-item" onclick="switchTab('tarjetas')">Tarjetas</div><div class="nav-item" onclick="switchTab('ausencias')">Ausencias</div><div class="nav-item" onclick="switchTab('reportes')">Reportes</div><div class="nav-item" onclick="switchTab('configuracion')">Configuración</div></nav></div>
+  <div id="main" class="main"><h2>Asistencia — Adulto</h2><div class="toolbar"><div class="cal-nav" style="display:flex; gap:10px; align-items:center;"><button onclick="calNav(-1)">‹</button><strong style="font-family:var(--f-display); font-size:15px;">Junio 2026</strong><button onclick="calNav(1)">›</button></div><button class="primary" onclick="exportAsistencia()">Exportar a Excel</button></div><div class="toolbar" style="margin-top:-10px;"><span></span><button onclick="openPartidoModal(null)">+ Agregar partido</button></div><div class="calendar"><div class="cal-label">Dom</div><div class="cal-label">Lun</div><div class="cal-label">Mar</div><div class="cal-label">Mié</div><div class="cal-label">Jue</div><div class="cal-label">Vie</div><div class="cal-label">Sáb</div><div class="cal-day empty"></div><div class="cal-day" onclick="openCalendarDate('2026-06-01')"><span class="cal-day-num">1</span></div><div class="cal-day has-session" onclick="openCalendarDate('2026-06-02')"><span class="cal-day-num">2</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-03')"><span class="cal-day-num">3</span></div><div class="cal-day has-session" onclick="openCalendarDate('2026-06-04')"><span class="cal-day-num">4</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-05')"><span class="cal-day-num">5</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-06')"><span class="cal-day-num">6</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-07')"><span class="cal-day-num">7</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-08')"><span class="cal-day-num">8</span></div><div class="cal-day has-session" onclick="openCalendarDate('2026-06-09')"><span class="cal-day-num">9</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-10')"><span class="cal-day-num">10</span></div><div class="cal-day has-session" onclick="openCalendarDate('2026-06-11')"><span class="cal-day-num">11</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-12')"><span class="cal-day-num">12</span></div><div class="cal-day has-match" onclick="openCalendarDate('2026-06-13')"><span class="cal-day-num">13</span><div class="cal-day-match-info">L · Stade</div></div><div class="cal-day" onclick="openCalendarDate('2026-06-14')"><span class="cal-day-num">14</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-15')"><span class="cal-day-num">15</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-16')"><span class="cal-day-num">16</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-17')"><span class="cal-day-num">17</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-18')"><span class="cal-day-num">18</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-19')"><span class="cal-day-num">19</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-20')"><span class="cal-day-num">20</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-21')"><span class="cal-day-num">21</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-22')"><span class="cal-day-num">22</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-23')"><span class="cal-day-num">23</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-24')"><span class="cal-day-num">24</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-25')"><span class="cal-day-num">25</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-26')"><span class="cal-day-num">26</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-27')"><span class="cal-day-num">27</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-28')"><span class="cal-day-num">28</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-29')"><span class="cal-day-num">29</span></div><div class="cal-day" onclick="openCalendarDate('2026-06-30')"><span class="cal-day-num">30</span></div></div><div style="margin-top:14px; font-size:12px; color:var(--text-secondary); display:flex; flex-direction:column; gap:6px;"><div style="display:flex; align-items:center; gap:6px;"><span style="display:inline-block; width:12px; height:12px; background:var(--highlight-bg); border:1px solid var(--highlight-border); border-radius:3px;"></span>Día con entrenamiento registrado</div><div style="display:flex; align-items:center; gap:6px;"><span style="display:inline-block; width:12px; height:12px; background:var(--match-bg); border:1px solid var(--match-border); border-radius:3px;"></span>Día con partido registrado</div><div>Haz clic en cualquier día para ver o crear la asistencia</div></div></div>
 </div>
 <div id="modal-overlay" class="modal-overlay" onclick="if(event.target.id==='modal-overlay') closeModal()"><div id="modal-body" class="modal"></div></div>
 <script>
@@ -198,107 +215,108 @@ function getTodayStr(){
   const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
   return y+'-'+m+'-'+day;
 }
-const TODAY=getTodayStr();
+// TODAY recalcula dinámicamente para que si la app queda abierta de un día para otro sea siempre correcto
+Object.defineProperty(window, 'TODAY', { get: getTodayStr });
 const DEFAULT_STATE={
   clubName:'COBS',
-  categorias:['Primera','M19','M17'],
-  selectedCategoria:'Primera',
+  categorias:['Adulto','M19','M17'],
+  selectedCategoria:'Adulto',
   players:[
-    {id:1,name:"Agustin Lathrop",pos:"Pilar",categoria:"Primera"},
-    {id:2,name:"Alberto Armstrong",pos:"Scrum half",categoria:"Primera"},
-    {id:3,name:"Alejandro Gabler",pos:"Pilar",categoria:"Primera"},
-    {id:4,name:"Andres Vial",pos:"Hooker",categoria:"Primera"},
-    {id:5,name:"Benjamin Briner",pos:"Pilar",categoria:"Primera"},
-    {id:6,name:"Benjamin Escobedo",pos:"Centro",categoria:"Primera"},
-    {id:7,name:"Benjamin Sandoval",pos:"Fullback",categoria:"Primera"},
-    {id:8,name:"Benjamín Díaz",pos:"Segunda Línea",categoria:"Primera"},
-    {id:9,name:"Benjamín Perez",pos:"Pilar",categoria:"Primera"},
-    {id:10,name:"Clemente Labbé",pos:"Scrum half",categoria:"Primera"},
-    {id:11,name:"Clemente Ulloa",pos:"Wing",categoria:"Primera"},
-    {id:12,name:"Clemente Vildosola",pos:"Wing",categoria:"Primera"},
-    {id:13,name:"Clemente Vásquez",pos:"Tercera Línea",categoria:"Primera"},
-    {id:14,name:"Cristobal Besoain",pos:"Fullback",categoria:"Primera"},
-    {id:15,name:"Cristobal González",pos:"Wing",categoria:"Primera"},
-    {id:16,name:"Cristobal Soto",pos:"Hooker",categoria:"Primera"},
-    {id:17,name:"Cristobal Trucco",pos:"Segunda Línea",categoria:"Primera"},
-    {id:18,name:"Cristobal Vidal",pos:"Pilar",categoria:"Primera"},
-    {id:19,name:"Diego Baudrand",pos:"Tercera Línea",categoria:"Primera"},
-    {id:20,name:"Diego Beltrán",pos:"Wing",categoria:"Primera"},
-    {id:21,name:"Diego Lagos",pos:"Tercera Línea",categoria:"Primera"},
-    {id:22,name:"Diego Martínez",pos:"Pilar",categoria:"Primera"},
-    {id:23,name:"Diego Sylleros",pos:"Tercera Línea",categoria:"Primera"},
-    {id:24,name:"Dimitri Simonidis",pos:"Centro",categoria:"Primera"},
-    {id:25,name:"Eduardo Orpis",pos:"Tercera Línea",categoria:"Primera"},
-    {id:26,name:"Enzo Neglia",pos:"Pilar",categoria:"Primera"},
-    {id:27,name:"Felipe Beltran",pos:"Pilar",categoria:"Primera"},
-    {id:28,name:"Fernando Lopez",pos:"Wing",categoria:"Primera"},
-    {id:29,name:"Florean Schmidt",pos:"Segunda Línea",categoria:"Primera"},
-    {id:30,name:"Francisco Acevedo",pos:"Pilar",categoria:"Primera"},
-    {id:31,name:"Francisco Alvariño",pos:"Pilar",categoria:"Primera"},
-    {id:32,name:"Francisco Figueroa",pos:"Fly half",categoria:"Primera"},
-    {id:33,name:"Franco Costantino",pos:"Hooker",categoria:"Primera"},
-    {id:34,name:"Giovanni Di",pos:"Hooker",categoria:"Primera"},
-    {id:35,name:"Ignacio Alvarez",pos:"Segunda Línea",categoria:"Primera"},
-    {id:36,name:"Ignacio Bravo",pos:"Hooker",categoria:"Primera"},
-    {id:37,name:"Ignacio Soublette",pos:"Tercera Línea",categoria:"Primera"},
-    {id:38,name:"Jan Hasenlechner",pos:"Scrum half",categoria:"Primera"},
-    {id:39,name:"Joao Alves",pos:"Wing",categoria:"Primera"},
-    {id:40,name:"Joaquín Fuentes",pos:"Wing",categoria:"Primera"},
-    {id:41,name:"Jorge Araya",pos:"Pilar",categoria:"Primera"},
-    {id:42,name:"Jose González",pos:"Centro",categoria:"Primera"},
-    {id:43,name:"José Escobedo",pos:"Wing",categoria:"Primera"},
-    {id:44,name:"José Vildósola",pos:"Wing",categoria:"Primera"},
-    {id:45,name:"Juan Beheran",pos:"Segunda Línea",categoria:"Primera"},
-    {id:46,name:"Juan Labbe",pos:"Scrum half",categoria:"Primera"},
-    {id:47,name:"Juan Naranjo",pos:"Fly half",categoria:"Primera"},
-    {id:48,name:"Vicente Codorniu",pos:"Pilar",categoria:"Primera"},
-    {id:49,name:"Lucas Conejero",pos:"Segunda Línea",categoria:"Primera"},
-    {id:50,name:"Lucas Fyfe",pos:"Tercera Línea",categoria:"Primera"},
-    {id:51,name:"Lucas Muñoz",pos:"Fly half",categoria:"Primera"},
-    {id:52,name:"Lucas Pizarro",pos:"Centro",categoria:"Primera"},
-    {id:53,name:"Lucas Radrigán",pos:"Tercera Línea",categoria:"Primera"},
-    {id:54,name:"Lucas Sandoval",pos:"Fly half",categoria:"Primera"},
-    {id:55,name:"Manuel Escandón",pos:"Pilar",categoria:"Primera"},
-    {id:56,name:"Manuel Gurruchaga",pos:"Hooker",categoria:"Primera"},
-    {id:57,name:"Marcelo Arancibia",pos:"Pilar",categoria:"Primera"},
-    {id:58,name:"Martin De",pos:"Fly half",categoria:"Primera"},
-    {id:59,name:"Martin James",pos:"Pilar",categoria:"Primera"},
-    {id:60,name:"Martín Dumay",pos:"Centro",categoria:"Primera"},
-    {id:61,name:"Matías Rebolledo",pos:"Wing",categoria:"Primera"},
-    {id:62,name:"Max Whiting",pos:"Tercera Línea",categoria:"Primera"},
-    {id:63,name:"Nicolás Donoso",pos:"Wing",categoria:"Primera"},
-    {id:64,name:"Nicolás Raddatz",pos:"Centro",categoria:"Primera"},
-    {id:65,name:"Nicolás Toso",pos:"Centro",categoria:"Primera"},
-    {id:66,name:"Nicolás Trucco",pos:"Scrum half",categoria:"Primera"},
-    {id:67,name:"Nikola Bursic",pos:"Segunda Línea",categoria:"Primera"},
-    {id:68,name:"Pedro Pichara",pos:"Wing",categoria:"Primera"},
-    {id:69,name:"Pedro Radrigán",pos:"Tercera Línea",categoria:"Primera"},
-    {id:70,name:"Rafael Palacios",pos:"Tercera Línea",categoria:"Primera"},
-    {id:71,name:"Rodolfo Loyola",pos:"Fullback",categoria:"Primera"},
-    {id:72,name:"Rodrigo Araya",pos:"Centro",categoria:"Primera"},
-    {id:73,name:"Santiago Cabargas",pos:"Fullback",categoria:"Primera"},
-    {id:74,name:"Santiago Holmgren",pos:"Pilar",categoria:"Primera"},
-    {id:75,name:"Santiago Valenzuela",pos:"Segunda Línea",categoria:"Primera"},
-    {id:76,name:"Sebastián Bianchi",pos:"Scrum half",categoria:"Primera"},
-    {id:77,name:"Sebastián González",pos:"Tercera Línea",categoria:"Primera"},
-    {id:78,name:"Tomas Dallan",pos:"Wing",categoria:"Primera"},
-    {id:79,name:"Tomas Fuentes",pos:"Wing",categoria:"Primera"},
-    {id:80,name:"Tomas Fyfe",pos:"Tercera Línea",categoria:"Primera"},
-    {id:81,name:"Tomás García",pos:"Pilar",categoria:"Primera"},
-    {id:82,name:"Tomás Rivera",pos:"Hooker",categoria:"Primera"},
-    {id:83,name:"Vicente Abarca",pos:"Scrum half",categoria:"Primera"},
-    {id:84,name:"Vicente Acuña",pos:"Segunda Línea",categoria:"Primera"},
-    {id:85,name:"Vicente Contreras",pos:"Tercera Línea",categoria:"Primera"},
-    {id:86,name:"Vicente Easton",pos:"Hooker",categoria:"Primera"},
-    {id:87,name:"Vicente Whiting",pos:"Tercera Línea",categoria:"Primera"},
-    {id:88,name:"Yabra Aguad",pos:"Segunda Línea",categoria:"Primera"},
-    {id:89,name:"Jose Deik",pos:"Centro",categoria:"Primera"},
-    {id:90,name:"Iñaki De",pos:"Tercera Línea",categoria:"Primera"},
-    {id:91,name:"Gonzalo Lara",pos:"Centro",categoria:"Primera"},
-    {id:92,name:"Martin Escobar",pos:"Centro",categoria:"Primera"},
-    {id:93,name:"Julian Manzur",pos:"Pilar",categoria:"Primera"},
-    {id:94,name:"Ignacio Osorio",pos:"Wing",categoria:"Primera"},
-    {id:95,name:"Gaspar Salgado",pos:"Hooker",categoria:"Primera"}
+    {id:1,name:"Agustin Lathrop",pos:"Pilar",categoria:"Adulto"},
+    {id:2,name:"Alberto Armstrong",pos:"Scrum half",categoria:"Adulto"},
+    {id:3,name:"Alejandro Gabler",pos:"Pilar",categoria:"Adulto"},
+    {id:4,name:"Andres Vial",pos:"Hooker",categoria:"Adulto"},
+    {id:5,name:"Benjamin Briner",pos:"Pilar",categoria:"Adulto"},
+    {id:6,name:"Benjamin Escobedo",pos:"Centro",categoria:"Adulto"},
+    {id:7,name:"Benjamin Sandoval",pos:"Fullback",categoria:"Adulto"},
+    {id:8,name:"Benjamín Díaz",pos:"Segunda Línea",categoria:"Adulto"},
+    {id:9,name:"Benjamín Perez",pos:"Pilar",categoria:"Adulto"},
+    {id:10,name:"Clemente Labbé",pos:"Scrum half",categoria:"Adulto"},
+    {id:11,name:"Clemente Ulloa",pos:"Wing",categoria:"Adulto"},
+    {id:12,name:"Clemente Vildosola",pos:"Wing",categoria:"Adulto"},
+    {id:13,name:"Clemente Vásquez",pos:"Tercera Línea",categoria:"Adulto"},
+    {id:14,name:"Cristobal Besoain",pos:"Fullback",categoria:"Adulto"},
+    {id:15,name:"Cristobal González",pos:"Wing",categoria:"Adulto"},
+    {id:16,name:"Cristobal Soto",pos:"Hooker",categoria:"Adulto"},
+    {id:17,name:"Cristobal Trucco",pos:"Segunda Línea",categoria:"Adulto"},
+    {id:18,name:"Cristobal Vidal",pos:"Pilar",categoria:"Adulto"},
+    {id:19,name:"Diego Baudrand",pos:"Tercera Línea",categoria:"Adulto"},
+    {id:20,name:"Diego Beltrán",pos:"Wing",categoria:"Adulto"},
+    {id:21,name:"Diego Lagos",pos:"Tercera Línea",categoria:"Adulto"},
+    {id:22,name:"Diego Martínez",pos:"Pilar",categoria:"Adulto"},
+    {id:23,name:"Diego Sylleros",pos:"Tercera Línea",categoria:"Adulto"},
+    {id:24,name:"Dimitri Simonidis",pos:"Centro",categoria:"Adulto"},
+    {id:25,name:"Eduardo Orpis",pos:"Tercera Línea",categoria:"Adulto"},
+    {id:26,name:"Enzo Neglia",pos:"Pilar",categoria:"Adulto"},
+    {id:27,name:"Felipe Beltran",pos:"Pilar",categoria:"Adulto"},
+    {id:28,name:"Fernando Lopez",pos:"Wing",categoria:"Adulto"},
+    {id:29,name:"Florean Schmidt",pos:"Segunda Línea",categoria:"Adulto"},
+    {id:30,name:"Francisco Acevedo",pos:"Pilar",categoria:"Adulto"},
+    {id:31,name:"Francisco Alvariño",pos:"Pilar",categoria:"Adulto"},
+    {id:32,name:"Francisco Figueroa",pos:"Fly half",categoria:"Adulto"},
+    {id:33,name:"Franco Costantino",pos:"Hooker",categoria:"Adulto"},
+    {id:34,name:"Giovanni Di",pos:"Hooker",categoria:"Adulto"},
+    {id:35,name:"Ignacio Alvarez",pos:"Segunda Línea",categoria:"Adulto"},
+    {id:36,name:"Ignacio Bravo",pos:"Hooker",categoria:"Adulto"},
+    {id:37,name:"Ignacio Soublette",pos:"Tercera Línea",categoria:"Adulto"},
+    {id:38,name:"Jan Hasenlechner",pos:"Scrum half",categoria:"Adulto"},
+    {id:39,name:"Joao Alves",pos:"Wing",categoria:"Adulto"},
+    {id:40,name:"Joaquín Fuentes",pos:"Wing",categoria:"Adulto"},
+    {id:41,name:"Jorge Araya",pos:"Pilar",categoria:"Adulto"},
+    {id:42,name:"Jose González",pos:"Centro",categoria:"Adulto"},
+    {id:43,name:"José Escobedo",pos:"Wing",categoria:"Adulto"},
+    {id:44,name:"José Vildósola",pos:"Wing",categoria:"Adulto"},
+    {id:45,name:"Juan Beheran",pos:"Segunda Línea",categoria:"Adulto"},
+    {id:46,name:"Juan Labbe",pos:"Scrum half",categoria:"Adulto"},
+    {id:47,name:"Juan Naranjo",pos:"Fly half",categoria:"Adulto"},
+    {id:48,name:"Vicente Codorniu",pos:"Pilar",categoria:"Adulto"},
+    {id:49,name:"Lucas Conejero",pos:"Segunda Línea",categoria:"Adulto"},
+    {id:50,name:"Lucas Fyfe",pos:"Tercera Línea",categoria:"Adulto"},
+    {id:51,name:"Lucas Muñoz",pos:"Fly half",categoria:"Adulto"},
+    {id:52,name:"Lucas Pizarro",pos:"Centro",categoria:"Adulto"},
+    {id:53,name:"Lucas Radrigán",pos:"Tercera Línea",categoria:"Adulto"},
+    {id:54,name:"Lucas Sandoval",pos:"Fly half",categoria:"Adulto"},
+    {id:55,name:"Manuel Escandón",pos:"Pilar",categoria:"Adulto"},
+    {id:56,name:"Manuel Gurruchaga",pos:"Hooker",categoria:"Adulto"},
+    {id:57,name:"Marcelo Arancibia",pos:"Pilar",categoria:"Adulto"},
+    {id:58,name:"Martin De",pos:"Fly half",categoria:"Adulto"},
+    {id:59,name:"Martin James",pos:"Pilar",categoria:"Adulto"},
+    {id:60,name:"Martín Dumay",pos:"Centro",categoria:"Adulto"},
+    {id:61,name:"Matías Rebolledo",pos:"Wing",categoria:"Adulto"},
+    {id:62,name:"Max Whiting",pos:"Tercera Línea",categoria:"Adulto"},
+    {id:63,name:"Nicolás Donoso",pos:"Wing",categoria:"Adulto"},
+    {id:64,name:"Nicolás Raddatz",pos:"Centro",categoria:"Adulto"},
+    {id:65,name:"Nicolás Toso",pos:"Centro",categoria:"Adulto"},
+    {id:66,name:"Nicolás Trucco",pos:"Scrum half",categoria:"Adulto"},
+    {id:67,name:"Nikola Bursic",pos:"Segunda Línea",categoria:"Adulto"},
+    {id:68,name:"Pedro Pichara",pos:"Wing",categoria:"Adulto"},
+    {id:69,name:"Pedro Radrigán",pos:"Tercera Línea",categoria:"Adulto"},
+    {id:70,name:"Rafael Palacios",pos:"Tercera Línea",categoria:"Adulto"},
+    {id:71,name:"Rodolfo Loyola",pos:"Fullback",categoria:"Adulto"},
+    {id:72,name:"Rodrigo Araya",pos:"Centro",categoria:"Adulto"},
+    {id:73,name:"Santiago Cabargas",pos:"Fullback",categoria:"Adulto"},
+    {id:74,name:"Santiago Holmgren",pos:"Pilar",categoria:"Adulto"},
+    {id:75,name:"Santiago Valenzuela",pos:"Segunda Línea",categoria:"Adulto"},
+    {id:76,name:"Sebastián Bianchi",pos:"Scrum half",categoria:"Adulto"},
+    {id:77,name:"Sebastián González",pos:"Tercera Línea",categoria:"Adulto"},
+    {id:78,name:"Tomas Dallan",pos:"Wing",categoria:"Adulto"},
+    {id:79,name:"Tomas Fuentes",pos:"Wing",categoria:"Adulto"},
+    {id:80,name:"Tomas Fyfe",pos:"Tercera Línea",categoria:"Adulto"},
+    {id:81,name:"Tomás García",pos:"Pilar",categoria:"Adulto"},
+    {id:82,name:"Tomás Rivera",pos:"Hooker",categoria:"Adulto"},
+    {id:83,name:"Vicente Abarca",pos:"Scrum half",categoria:"Adulto"},
+    {id:84,name:"Vicente Acuña",pos:"Segunda Línea",categoria:"Adulto"},
+    {id:85,name:"Vicente Contreras",pos:"Tercera Línea",categoria:"Adulto"},
+    {id:86,name:"Vicente Easton",pos:"Hooker",categoria:"Adulto"},
+    {id:87,name:"Vicente Whiting",pos:"Tercera Línea",categoria:"Adulto"},
+    {id:88,name:"Yabra Aguad",pos:"Segunda Línea",categoria:"Adulto"},
+    {id:89,name:"Jose Deik",pos:"Centro",categoria:"Adulto"},
+    {id:90,name:"Iñaki De",pos:"Tercera Línea",categoria:"Adulto"},
+    {id:91,name:"Gonzalo Lara",pos:"Centro",categoria:"Adulto"},
+    {id:92,name:"Martin Escobar",pos:"Centro",categoria:"Adulto"},
+    {id:93,name:"Julian Manzur",pos:"Pilar",categoria:"Adulto"},
+    {id:94,name:"Ignacio Osorio",pos:"Wing",categoria:"Adulto"},
+    {id:95,name:"Gaspar Salgado",pos:"Hooker",categoria:"Adulto"}
   ],
   nextPlayerId:96,
   sesiones:[
@@ -327,14 +345,14 @@ const DEFAULT_STATE={
   lesiones:[],
   nextLesionId:1,
   tarjetas:[
-    {id:1,playerId:92,tipo:'amarilla',partido:'vs DOBS',plantel:'Primera',motivo:'',partidos:0,retorno:''},
-    {id:2,playerId:26,tipo:'amarilla',partido:'vs Old Macks',plantel:'Primera',motivo:'',partidos:0,retorno:''},
-    {id:3,playerId:48,tipo:'amarilla',partido:'vs Old Macks',plantel:'Primera',motivo:'',partidos:0,retorno:''},
-    {id:4,playerId:41,tipo:'amarilla',partido:'vs Old Boys',plantel:'Primera',motivo:'',partidos:0,retorno:''},
-    {id:5,playerId:85,tipo:'amarilla',partido:'vs Old Boys',plantel:'Primera',motivo:'',partidos:0,retorno:''},
-    {id:6,playerId:77,tipo:'amarilla',partido:'vs UC',plantel:'Primera',motivo:'',partidos:0,retorno:''},
-    {id:7,playerId:67,tipo:'amarilla',partido:'vs DOBS',plantel:'Primera',motivo:'',partidos:0,retorno:''},
-    {id:8,playerId:37,tipo:'amarilla',partido:'vs Sporting RC',plantel:'Primera',motivo:'',partidos:0,retorno:''},
+    {id:1,playerId:92,tipo:'amarilla',partido:'vs DOBS',plantel:'Adulto',motivo:'',partidos:0,retorno:''},
+    {id:2,playerId:26,tipo:'amarilla',partido:'vs Old Macks',plantel:'Adulto',motivo:'',partidos:0,retorno:''},
+    {id:3,playerId:48,tipo:'amarilla',partido:'vs Old Macks',plantel:'Adulto',motivo:'',partidos:0,retorno:''},
+    {id:4,playerId:41,tipo:'amarilla',partido:'vs Old Boys',plantel:'Adulto',motivo:'',partidos:0,retorno:''},
+    {id:5,playerId:85,tipo:'amarilla',partido:'vs Old Boys',plantel:'Adulto',motivo:'',partidos:0,retorno:''},
+    {id:6,playerId:77,tipo:'amarilla',partido:'vs UC',plantel:'Adulto',motivo:'',partidos:0,retorno:''},
+    {id:7,playerId:67,tipo:'amarilla',partido:'vs DOBS',plantel:'Adulto',motivo:'',partidos:0,retorno:''},
+    {id:8,playerId:37,tipo:'amarilla',partido:'vs Sporting RC',plantel:'Adulto',motivo:'',partidos:0,retorno:''},
     {id:9,playerId:22,tipo:'amarilla',partido:'vs Old Macks',plantel:'Intermedia',motivo:'',partidos:0,retorno:''},
     {id:10,playerId:18,tipo:'amarilla',partido:'vs Old Macks',plantel:'Intermedia',motivo:'',partidos:0,retorno:''},
     {id:11,playerId:74,tipo:'amarilla',partido:'vs Old Johns',plantel:'Intermedia',motivo:'',partidos:0,retorno:''},
@@ -352,7 +370,7 @@ const DEFAULT_STATE={
     {id:23,playerId:65,tipo:'amarilla',partido:'vs Old Johns',plantel:'Lions',motivo:'',partidos:0,retorno:''},
     {id:24,playerId:12,tipo:'amarilla',partido:'vs UC',plantel:'Lions',motivo:'',partidos:0,retorno:''},
     {id:25,playerId:55,tipo:'amarilla',partido:'vs PWCC',plantel:'Lions',motivo:'',partidos:0,retorno:''},
-    {id:26,playerId:85,tipo:'amarilla',partido:'vs UC',plantel:'Primera',motivo:'',partidos:0,retorno:''},
+    {id:26,playerId:85,tipo:'amarilla',partido:'vs UC',plantel:'Adulto',motivo:'',partidos:0,retorno:''},
     {id:27,playerId:22,tipo:'amarilla',partido:'vs UC',plantel:'Intermedia',motivo:'',partidos:0,retorno:''},
     {id:28,playerId:30,tipo:'amarilla',partido:'vs DOBS',plantel:'Intermedia',motivo:'',partidos:0,retorno:''}
   ],
@@ -360,37 +378,196 @@ const DEFAULT_STATE={
   ausencias:[],
   nextAusenciaId:1,
   partidos:[
-    {id:1,fecha:'2026-04-12',rival:'DOBS',condicion:'local',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
-    {id:2,fecha:'2026-05-08',rival:'Old Boys',condicion:'visita',planteles:[{nombre:'Primera',horario:'20:30'},{nombre:'Intermedia',horario:'18:30'},{nombre:'Pre Intermedia',horario:'16:30'}]},
-    {id:3,fecha:'2026-05-16',rival:'PWCC',condicion:'visita',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
-    {id:4,fecha:'2026-04-26',rival:'Old Johns',condicion:'local',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
-    {id:5,fecha:'2026-05-30',rival:'UC',condicion:'local',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
-    {id:6,fecha:'2026-06-07',rival:'Old Reds',condicion:'visita',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
-    {id:7,fecha:'2026-06-14',rival:'Sporting RC',condicion:'local',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
-    {id:8,fecha:'2026-06-21',rival:'Stade Francais',condicion:'visita',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
-    {id:9,fecha:'2026-07-05',rival:'DOBS',condicion:'visita',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
-    {id:10,fecha:'2026-07-12',rival:'Old Macks',condicion:'local',planteles:[{nombre:'Primera',horario:'13:30'},{nombre:'Intermedia',horario:'11:30'},{nombre:'Pre Intermedia',horario:'09:30'}]},
-    {id:11,fecha:'2026-07-18',rival:'Sporting RC',condicion:'visita',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
-    {id:12,fecha:'2026-08-01',rival:'Old Boys',condicion:'local',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
-    {id:13,fecha:'2026-08-09',rival:'PWCC',condicion:'local',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
-    {id:14,fecha:'2026-08-15',rival:'Stade Francais',condicion:'local',planteles:[{nombre:'Primera',horario:'15:00'},{nombre:'Intermedia',horario:'13:00'},{nombre:'Pre Intermedia',horario:'11:00'}]},
-    {id:15,fecha:'2026-08-22',rival:'Old Reds',condicion:'local',planteles:[{nombre:'Primera',horario:'15:00'},{nombre:'Intermedia',horario:'13:00'},{nombre:'Pre Intermedia',horario:'11:00'}]},
-    {id:16,fecha:'2026-09-05',rival:'Old Johns',condicion:'visita',planteles:[{nombre:'Primera',horario:'14:00'},{nombre:'Intermedia',horario:'12:00'},{nombre:'Pre Intermedia',horario:'10:00'}]},
-    {id:17,fecha:'2026-09-12',rival:'UC',condicion:'visita',planteles:[{nombre:'Primera',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]}
+    {id:1,fecha:'2026-04-12',rival:'DOBS',condicion:'local',planteles:[{nombre:'Adulto',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
+    {id:2,fecha:'2026-05-08',rival:'Old Boys',condicion:'visita',planteles:[{nombre:'Adulto',horario:'20:30'},{nombre:'Intermedia',horario:'18:30'},{nombre:'Pre Intermedia',horario:'16:30'}]},
+    {id:3,fecha:'2026-05-16',rival:'PWCC',condicion:'visita',planteles:[{nombre:'Adulto',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
+    {id:4,fecha:'2026-04-26',rival:'Old Johns',condicion:'local',planteles:[{nombre:'Adulto',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
+    {id:5,fecha:'2026-05-30',rival:'UC',condicion:'local',planteles:[{nombre:'Adulto',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
+    {id:6,fecha:'2026-06-07',rival:'Old Reds',condicion:'visita',planteles:[{nombre:'Adulto',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
+    {id:7,fecha:'2026-06-14',rival:'Sporting RC',condicion:'local',planteles:[{nombre:'Adulto',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
+    {id:8,fecha:'2026-06-21',rival:'Stade Francais',condicion:'visita',planteles:[{nombre:'Adulto',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
+    {id:9,fecha:'2026-07-05',rival:'DOBS',condicion:'visita',planteles:[{nombre:'Adulto',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
+    {id:10,fecha:'2026-07-12',rival:'Old Macks',condicion:'local',planteles:[{nombre:'Adulto',horario:'13:30'},{nombre:'Intermedia',horario:'11:30'},{nombre:'Pre Intermedia',horario:'09:30'}]},
+    {id:11,fecha:'2026-07-18',rival:'Sporting RC',condicion:'visita',planteles:[{nombre:'Adulto',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
+    {id:12,fecha:'2026-08-01',rival:'Old Boys',condicion:'local',planteles:[{nombre:'Adulto',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
+    {id:13,fecha:'2026-08-09',rival:'PWCC',condicion:'local',planteles:[{nombre:'Adulto',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]},
+    {id:14,fecha:'2026-08-15',rival:'Stade Francais',condicion:'local',planteles:[{nombre:'Adulto',horario:'15:00'},{nombre:'Intermedia',horario:'13:00'},{nombre:'Pre Intermedia',horario:'11:00'}]},
+    {id:15,fecha:'2026-08-22',rival:'Old Reds',condicion:'local',planteles:[{nombre:'Adulto',horario:'15:00'},{nombre:'Intermedia',horario:'13:00'},{nombre:'Pre Intermedia',horario:'11:00'}]},
+    {id:16,fecha:'2026-09-05',rival:'Old Johns',condicion:'visita',planteles:[{nombre:'Adulto',horario:'14:00'},{nombre:'Intermedia',horario:'12:00'},{nombre:'Pre Intermedia',horario:'10:00'}]},
+    {id:17,fecha:'2026-09-12',rival:'UC',condicion:'visita',planteles:[{nombre:'Adulto',horario:'15:30'},{nombre:'Intermedia',horario:'13:30'},{nombre:'Pre Intermedia',horario:'11:30'}]}
   ],
   nextPartidoId:18
 };
 let state=null;
 
 // ---------- helpers ----------
+function generarInformePDF(partido, dispList, enDudaList, lesionList, ausList){
+  _informeData = null;
+  const title = 'Estado por partido - vs '+partido.rival+' '+formatDate(partido.fecha);
+
+  const loadjsPDF = () => new Promise(resolve => {
+    if(typeof window.jspdf !== 'undefined'){ resolve(window.jspdf.jsPDF); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload = () => resolve(window.jspdf.jsPDF);
+    document.head.appendChild(s);
+  });
+
+  showToast('Generando PDF...', 'info');
+
+  loadjsPDF().then(jsPDF => {
+    const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+    const W=297, H=210, margin=10, usableW=W-margin*2;
+    const GREEN=[22,101,52], BROWN=[146,64,14], RED=[153,27,27], BLUE=[30,58,138];
+    const GRAY=[240,240,240], DGRAY=[120,120,120], BLACK=[0,0,0];
+
+    function pageHeader(){
+      doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(...BLACK);
+      doc.text(state.clubName+' — '+state.selectedCategoria, margin, margin+5);
+      doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(...DGRAY);
+      doc.text('Estado por partido · '+partidoLabel(partido)+' · Emitido: '+formatDate(getTodayStr()), W-margin, margin+5, {align:'right'});
+    }
+
+    function drawPosTable(items, color, titulo, startY, allPos){
+      const cols = allPos
+        ? Object.keys(POS_ORDER).map(pos=>({pos, jgs:items.filter(({p})=>p.pos===pos)}))
+        : Object.keys(POS_ORDER).map(pos=>({pos, jgs:items.filter(({p})=>p.pos===pos)})).filter(c=>c.jgs.length);
+      const otros = items.filter(({p})=>!POS_ORDER[p.pos]);
+      if(otros.length) cols.push({pos:'Otros',jgs:otros});
+      if(!cols.length) return startY+4;
+      let y = startY;
+      doc.setFillColor(...color); doc.rect(margin, y, usableW, 6, 'F');
+      doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+      doc.text(titulo+' ('+items.length+')', margin+2, y+4.2);
+      y += 6;
+      const colW = usableW/cols.length;
+      doc.setFillColor(...GRAY); doc.rect(margin, y, usableW, 5, 'F');
+      cols.forEach((col,i)=>{
+        doc.setFontSize(6); doc.setFont('helvetica','bold'); doc.setTextColor(...color);
+        doc.text(col.pos+' ('+col.jgs.length+')', margin+i*colW+1, y+3.5, {maxWidth:colW-2});
+      });
+      y += 5;
+      const maxR = Math.max(...cols.map(c=>c.jgs.length),0);
+      for(let r=0;r<maxR;r++){
+        cols.forEach((col,i)=>{
+          const j=col.jgs[r];
+          if(j){
+            doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(...BLACK);
+            doc.text(j.p.name, margin+i*colW+1, y+3.2, {maxWidth:colW-2});
+          }
+        });
+        doc.setDrawColor(220,220,220);
+        doc.line(margin, y+4.5, margin+usableW, y+4.5);
+        y += 4.5;
+        if(y > H-margin-8){ doc.addPage(); y=margin+8; pageHeader(); }
+      }
+      return y+3;
+    }
+
+    function drawSimpleList(items, color, titulo, x, y, colW){
+      const sorted = items.slice().sort((a,b)=>posSortValGlobal(a.p.pos)-posSortValGlobal(b.p.pos)||a.p.name.localeCompare(b.p.name));
+      doc.setFillColor(...color); doc.rect(x, y, colW, 6, 'F');
+      doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+      doc.text(titulo+' ('+items.length+')', x+2, y+4.2);
+      y += 6;
+      const rowH = 5.5;
+      sorted.forEach(item=>{
+        const detail = (item.st.labelOverride && item.st.labelOverride!=='Ausente' ? item.st.labelOverride : '') || '';
+        // Nombre en negrita
+        doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(...BLACK);
+        doc.text(item.p.name, x+1, y+3.5, {maxWidth: colW*0.45});
+        // Posición en gris
+        doc.setFontSize(6.5); doc.setFont('helvetica','normal'); doc.setTextColor(...DGRAY);
+        doc.text(item.p.pos, x+colW*0.45+1, y+3.5, {maxWidth: colW*0.25});
+        // Detalle
+        if(detail){
+          doc.setFontSize(6.5); doc.setTextColor(150,150,150);
+          doc.text(detail, x+colW*0.7+1, y+3.5, {maxWidth: colW*0.3-2});
+        }
+        doc.setDrawColor(220,220,220);
+        doc.line(x, y+rowH, x+colW, y+rowH);
+        y += rowH;
+        if(y > H-margin-8){ doc.addPage(); y=margin+8; pageHeader(); }
+      });
+      return y;
+    }
+
+    // Hoja 1: Disponibles + En duda
+    pageHeader();
+    let y = margin+10;
+    y = drawPosTable(dispList, GREEN, '\u2713 Disponibles', y, false);
+    y += 3;
+    if(y < H-40) drawPosTable(enDudaList, BROWN, '? En duda', y, true);
+
+    // Hoja 2: Lesionados + Ausentes
+    doc.addPage();
+    pageHeader();
+    y = margin+10;
+    const halfW = (usableW-6)/2;
+
+    // Para lesionados: mostrar descripción de lesión
+    const lesItems = lesionList.map(x=>({...x, _label: x.st.detail ? x.st.detail.split('·')[0].trim() : ''}));
+    const ausItems = ausList.map(x=>({...x, _label: x.st.labelOverride||''}));
+
+    function drawList2(items, color, titulo, x, y, colW, getLabel){
+      const sorted = items.slice().sort((a,b)=>posSortValGlobal(a.p.pos)-posSortValGlobal(b.p.pos)||a.p.name.localeCompare(b.p.name));
+      doc.setFillColor(...color); doc.rect(x, y, colW, 6, 'F');
+      doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+      doc.text(titulo+' ('+items.length+')', x+2, y+4.2);
+      y += 6;
+      sorted.forEach(item=>{
+        const lbl = getLabel(item);
+        doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(...BLACK);
+        doc.text(item.p.name, x+1, y+3.5, {maxWidth: colW*0.42});
+        doc.setFontSize(6.5); doc.setFont('helvetica','normal'); doc.setTextColor(...DGRAY);
+        doc.text(item.p.pos, x+colW*0.42+1, y+3.5, {maxWidth: colW*0.22});
+        if(lbl){
+          doc.setFontSize(6); doc.setTextColor(150,150,150);
+          doc.text(lbl, x+colW*0.64+1, y+3.5, {maxWidth: colW*0.36-2});
+        }
+        doc.setDrawColor(220,220,220);
+        doc.line(x, y+5.5, x+colW, y+5.5);
+        y += 5.5;
+        if(y > H-margin-8){ doc.addPage(); y=margin+8; pageHeader(); }
+      });
+      return y;
+    }
+
+    drawList2(lesionList, RED, '\u00d7 Lesionados', margin, y, halfW, x=>x.st.detail?x.st.detail.split('\u00b7')[0].trim():'');
+    drawList2(ausList, BLUE, '\u2014 Ausentes', margin+halfW+6, y, halfW, x=>x.st.labelOverride&&x.st.labelOverride!=='Ausente'?x.st.labelOverride:'');
+
+    doc.save(title+'.pdf');
+    showToast('\u2713 PDF descargado');
+  });
+}
+function downloadInformePDF(){}
+
 function formatDate(d){ if(!d) return '—'; const p=d.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
+function showToast(msg, type){
+  const existing=document.getElementById('rt-toast');
+  if(existing) existing.remove();
+  const colors={ok:'var(--success-text)',err:'var(--danger-text)',info:'var(--info-text)'};
+  const bgs={ok:'var(--success-bg)',err:'var(--danger-bg)',info:'var(--info-bg)'};
+  const t=document.createElement('div');
+  t.id='rt-toast';
+  t.textContent=msg;
+  t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:'+bgs[type||'ok']+';color:'+colors[type||'ok']+';border:1px solid '+colors[type||'ok']+';border-radius:999px;padding:8px 20px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);pointer-events:none;';
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 2500);
+}
 function getInitials(name){ const w=(name||'').trim().split(/\s+/); return w.length>=2 ? (w[0][0]+w[1][0]).toUpperCase() : (name||'CL').substring(0,2).toUpperCase(); }
 function isAusenciaActiva(a){
   if(a.fechaDesde && a.fechaDesde>TODAY) return false;
   if(a.fechaHasta && a.fechaHasta<TODAY) return false;
   return true;
 }
-function getPlayersInCategory(){ return state.players.filter(p=>p.categoria===state.selectedCategoria); }
+function getProximosPartidos(){
+  return state.partidos.filter(m=>m.fecha>=TODAY).slice().sort((a,b)=>a.fecha.localeCompare(b.fecha));
+}
+function partidoLabel(m){
+  return formatDate(m.fecha)+(m.rival?' vs '+m.rival:'')+(m.condicion==='visita'?' (visita)':'');
+}
+function getPlayersInCategory(){ return state.players.filter(p=>p.categoria===state.selectedCategoria && p.activo!==false); }
 function playerById(id){ return state.players.find(p=>p.id===id); }
 function playerName(id){ const p=playerById(id); return p?p.name:'—'; }
 const STATUS_INFO={
@@ -401,22 +578,23 @@ const STATUS_INFO={
   ausente:{label:'Ausente',cls:'neutral'}
 };
 const STATUS_ORDER={lesionado:0,suspendido:1,ausente:2,en_duda:3,disponible:4};
-function badge(status){ const s=STATUS_INFO[status]; return '<span class="badge badge-'+s.cls+'">'+s.label+'</span>'; }
+function badge(status, vencido, labelOverride){ const s=STATUS_INFO[status]; const lbl=labelOverride||s.label; return '<span class="badge badge-'+(vencido?'warning':s.cls)+'">'+(vencido?'¿'+lbl+'?':lbl)+'</span>'; }
 function getLastUpdate(rec){ if(rec.comentarios&&rec.comentarios.length) return rec.comentarios[rec.comentarios.length-1]; return null; }
 function isSuspensionActiva(t){
-  if(!t.retorno) return true; // sin fecha de retorno definida, se considera vigente hasta que se edite
-  return t.retorno>=TODAY;
+  if(!t.retorno || t.retorno==='') return false;
+  return t.retorno > getTodayStr();
 }
 function getPlayerStatus(id){
   const susp=state.tarjetas.find(t=>t.playerId===id && t.retorno && isSuspensionActiva(t));
   if(susp) return {status:'suspendido', detail: susp.motivo+(susp.retorno?' · Vuelve: '+formatDate(susp.retorno):'')};
-  const activa=state.lesiones.find(l=>l.playerId===id && (l.estado==='activa'||l.estado==='en_revision'||l.estado==='recuperacion'));
-  if(activa){ const lu=getLastUpdate(activa); return {status:'lesionado', detail:(lu?lu.texto:activa.desc)+(activa.retorno?' · Retorno: '+formatDate(activa.retorno):'')}; }
+  // recuperacion → en_duda; activa/en_revision → lesionado
+  const recup=state.lesiones.find(l=>l.playerId===id && l.estado==='recuperacion');
+  if(recup){ const lu=getLastUpdate(recup); return {status:'en_duda', vencido:isRetornoVencido(recup), detail:(lu?lu.texto:recup.desc)+(recup.retorno?' · Retorno: '+formatDate(recup.retorno):''), labelOverride:null}; }
+  const activa=state.lesiones.find(l=>l.playerId===id && (l.estado==='activa'||l.estado==='en_revision'));
+  if(activa){ const lu=getLastUpdate(activa); return {status:'lesionado', vencido:isRetornoVencido(activa), detail:(lu?lu.texto:activa.desc)+(activa.retorno?' · Retorno: '+formatDate(activa.retorno):''), labelOverride:null}; }
   const aus=state.ausencias.find(a=>a.playerId===id && isAusenciaActiva(a));
-  if(aus) return {status:'ausente', detail: aus.motivo+(aus.fechaHasta?' · Vuelve: '+formatDate(aus.fechaHasta):'')};
-  const rec=state.lesiones.find(l=>l.playerId===id && l.estado==='recuperacion');
-  if(rec){ const lu=getLastUpdate(rec); return {status:'en_duda', detail:(lu?lu.texto:rec.desc)+(rec.retorno?' · Retorno: '+formatDate(rec.retorno):'')}; }
-  return {status:'disponible', detail:''};
+  if(aus) return {status:'ausente', labelOverride:aus.motivo, detail: aus.motivo+(aus.fechaHasta?' · Vuelve: '+formatDate(aus.fechaHasta):''), vencido:false};
+  return {status:'disponible', detail:'', labelOverride:null, vencido:false};
 }
 
 // ---------- sorting ----------
@@ -450,11 +628,14 @@ function sortList(list,sortObj,comparators){
 }
 
 // ---------- modal ----------
-function showModal(html){ document.getElementById('modal-body').innerHTML=html; document.getElementById('modal-overlay').style.display='flex'; }
+function showModal(html){
+  document.getElementById('modal-body').innerHTML='<button onclick="closeModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;font-size:20px;color:var(--text-secondary);cursor:pointer;padding:4px;line-height:1;z-index:1;">✕</button>'+html;
+  document.getElementById('modal-overlay').style.display='flex';
+}
 function closeModal(){ document.getElementById('modal-overlay').style.display='none'; }
 
 // ---------- nav / shell ----------
-const TABS=[['asistencia','Asistencia'],['plantel','Plantel'],['lesiones','Lesiones'],['tarjetas','Tarjetas'],['ausencias','Ausencias'],['reportes','Reportes'],['arusa','ARUSA'],['configuracion','Configuración']];
+const TABS=[['asistencia','Asistencia'],['plantel','Plantel'],['lesiones','Lesiones'],['tarjetas','Tarjetas'],['ausencias','Ausencias'],['estado_plantel','Estado Plantel'],['reportes','Reportes'],['configuracion','Configuración']];
 let currentTab='asistencia';
 function renderSidebar(){
   let html='<div class="brand"><div class="logo"><img src="'+CLUB_LOGO_DATA_URL+'" alt="Logo"/></div><div style="font-family:var(--f-display); font-size:18px; font-weight:600;">'+state.clubName+'</div></div>';
@@ -464,8 +645,8 @@ function renderSidebar(){
   html+='</nav>';
   document.getElementById('sidebar').innerHTML=html;
 }
-function setCategoria(v){ state.selectedCategoria=v; saveState(); renderMain(); }
-function switchTab(id){ currentTab=id; closeModal(); closeSidebar(); renderSidebar(); renderMain(); }
+function setCategoria(v){ state.selectedCategoria=v; plantelPartidoFilter=''; lesionPartidoFilter=''; ausenciaPartidoFilter=''; tarjetasPlantelFilter='todos'; saveState(); renderMain(); }
+function switchTab(id){ currentTab=id; lesionPartidoFilter=''; plantelPartidoFilter=''; closeModal(); closeSidebar(); renderSidebar(); renderMain(); }
 function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-scrim').classList.toggle('open'); }
 function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-scrim').classList.remove('open'); }
 function updateMobileHeader(){
@@ -481,13 +662,13 @@ function renderMain(){
   else if(currentTab==='lesiones') renderLesiones();
   else if(currentTab==='tarjetas') renderTarjetas();
   else if(currentTab==='ausencias') renderAusencias();
+  else if(currentTab==='estado_plantel') renderEstadoPlantel();
   else if(currentTab==='reportes') renderReportes();
-  else if(currentTab==='arusa') renderArusa();
   else renderConfiguracion();
 }
 
 // ---------- Asistencia ----------
-let asistView={mode:'calendar', year:2026, month:5, sesionId:null};
+const _now=new Date(); let asistView={mode:'calendar', year:_now.getFullYear(), month:_now.getMonth(), sesionId:null};
 function renderAsistencia(){
   if(asistView.mode==='session'){ renderAsistSession(); return; }
   const year=asistView.year, month=asistView.month;
@@ -509,6 +690,7 @@ function renderAsistencia(){
     const hasSession=state.sesiones.some(s=>s.fecha===dateStr && Object.values(s.asistencia).some(v=>v===true));
     const dayMatches=state.partidos.filter(m=>m.fecha===dateStr);
     const hasMatch=dayMatches.length>0;
+    const isToday=dateStr===TODAY;
     let cls='cal-day';
     if(hasSession) cls+=' has-session';
     if(hasMatch) cls+=' has-match';
@@ -520,7 +702,9 @@ function renderAsistencia(){
         return condAbbr+' · '+rivalTxt;
       }).join('<br>')+'</div>';
     }
-    html+='<div class="'+cls+'" onclick="openCalendarDate(\''+dateStr+'\')"><span class="cal-day-num">'+d+'</span>'+matchInfo+'</div>';
+    const todayStyle=isToday?' style="outline:2px solid #f59e0b; outline-offset:1px; font-weight:700;"':'';
+    const todayNum=isToday?'<span class="cal-day-num" style="color:#b45309;">'+d+'</span>':'<span class="cal-day-num">'+d+'</span>';
+    html+='<div class="'+cls+'"'+todayStyle+' onclick="openCalendarDate(\''+dateStr+'\')">'+todayNum+matchInfo+'</div>';
   }
   html+='</div>';
   html+='<div style="margin-top:14px; font-size:12px; color:var(--text-secondary); display:flex; flex-direction:column; gap:6px;">'
@@ -538,9 +722,11 @@ function calNav(delta){
 function openCalendarDate(dateStr){
   let sess=state.sesiones.find(s=>s.fecha===dateStr);
   if(!sess){
+    // No persistir aún — crear sesión en memoria solamente
     const asistencia={}; getPlayersInCategory().forEach(p=>asistencia[p.id]=false);
-    sess={id:state.nextSesionId++, fecha:dateStr, asistencia};
-    state.sesiones.push(sess); saveState();
+    sess={id:state.nextSesionId++, fecha:dateStr, asistencia, _draft:true};
+    state.sesiones.push(sess);
+    // NO llamar saveState() aquí
   }
   asistView.mode='session'; asistView.sesionId=sess.id;
   renderAsistencia();
@@ -576,10 +762,17 @@ function renderAsistSession(){
   html+='</tbody></table>';
   document.getElementById('main').innerHTML=html;
 }
-function backToCalendar(){ asistView.mode='calendar'; renderAsistencia(); }
+function backToCalendar(){
+  // Si vuelve sin marcar nada, eliminar la sesión draft de memoria
+  const sess=state.sesiones.find(s=>s.id===asistView.sesionId);
+  if(sess && sess._draft) state.sesiones=state.sesiones.filter(s=>s.id!==sess.id);
+  asistView.mode='calendar'; renderAsistencia();
+}
 function toggleAsistSession(playerId){
   const sess=state.sesiones.find(s=>s.id===asistView.sesionId);
   sess.asistencia[playerId]=!sess.asistencia[playerId];
+  // Si era draft, ahora se convierte en sesión real al primer toggle
+  if(sess._draft) delete sess._draft;
   saveState(); renderAsistSession();
 }
 let __xlsxLoadingPromise=null;
@@ -600,7 +793,7 @@ function exportAsistencia(){
     const sessions=getSesionesSinPartido().slice().sort((a,b)=>a.fecha.localeCompare(b.fecha));
     const plist=getPlayersInCategory();
     const header=['Jugador','Posición'].concat(sessions.map(s=>formatDate(s.fecha)));
-    const rows=plist.map(p=>[p.name,p.pos].concat(sessions.map(s=> s.asistencia[p.id] ? 'Presente':'Ausente')));
+    const rows=plist.map(p=>[p.name,p.pos].concat(sessions.map(s=> s.asistencia[p.id] ? 1 : 0)));
     const ws=XLSX.utils.aoa_to_sheet([header].concat(rows));
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,'Asistencia');
@@ -625,7 +818,7 @@ function renderPartidoModalContent(isNew, rec){
     +'<div class="field"><label>Planteles que juegan (cada uno con su horario)</label>'
     +'<div id="pm-planteles-list">'+renderPartidoPlantelesList()+'</div>'
     +'<div style="display:flex; gap:8px; margin-top:8px;">'
-    +'<input id="pm-nuevo-plantel" type="text" placeholder="Nombre del plantel (ej. Primera)" style="flex:2;"/>'
+    +'<input id="pm-nuevo-plantel" type="text" placeholder="Nombre del plantel (ej. Adulto)" style="flex:2;"/>'
     +'<input id="pm-nuevo-horario" type="time" style="flex:1;"/>'
     +'<button onclick="addPartidoPlantel()" style="flex:0 0 auto;">+ Agregar</button>'
     +'</div></div>'
@@ -667,15 +860,57 @@ function deletePartido(id){
 }
 
 // ---------- Plantel ----------
+let _informeData = null;
 let plantelFilter='todos';
 let plantelPosFilter=[]; // array de posiciones seleccionadas, vacío = todas
+let plantelPartidoFilter='';
+const POS_ORDER={'Pilar':1,'Hooker':2,'Segunda Línea':3,'Tercera Línea':4,'Scrum half':5,'Fly half':6,'Centro':7,'Wing':8,'Fullback':9};
+const POSICIONES=Object.keys(POS_ORDER);
+function posSortValGlobal(pos){ return POS_ORDER[pos]||99; }
+function posSelect(id, currentVal){
+  return '<select id="'+id+'">'+POSICIONES.map(p=>'<option'+(p===currentVal?' selected':'')+'>'+p+'</option>').join('')+'</select>';
+}
+
 const plantelComparators={
   jugador:(a,b)=>a.p.name.localeCompare(b.p.name),
-  posicion:(a,b)=>a.p.pos.localeCompare(b.p.pos),
+  posicion:(a,b)=>posSortValGlobal(a.p.pos)-posSortValGlobal(b.p.pos) || a.p.name.localeCompare(b.p.name),
   estado:(a,b)=>STATUS_ORDER[a.st.status]-STATUS_ORDER[b.st.status],
   asistencia:(a,b)=>(a.pct===null?-1:a.pct)-(b.pct===null?-1:b.pct)
 };
 function setPlantelFilter(v){ plantelFilter=v; renderPlantel(); }
+function setPlantelPartidoFilter(v){ plantelPartidoFilter=v; renderPlantel(); }
+
+// Estado que tendrá un jugador EN la fecha de un partido (estado futuro)
+function getPlayerStatusAtDate(playerId, fechaPartido){
+  // Suspensión: activa en la fecha del partido (retorno > fechaPartido significa sigue suspendido)
+  const susp = state.tarjetas.find(t =>
+    t.playerId===playerId && t.retorno && t.retorno > fechaPartido
+  );
+  if(susp) return {status:'suspendido', detail: susp.motivo+(susp.retorno?' · Vuelve: '+formatDate(susp.retorno):''), labelOverride:null, vencido:false};
+
+  // Lesión activa que sigue sin retorno o retorno > fecha partido (excluir explícitamente 'alta')
+  const l = state.lesiones.find(x => x.playerId===playerId
+    && x.estado!=='alta'
+    && (x.estado==='activa'||x.estado==='en_revision'||x.estado==='recuperacion'));
+  if(l){
+    if(!l.retorno) return {status:'lesionado', detail:l.desc||'', labelOverride:null, vencido:false};
+    if(l.retorno > fechaPartido) return {status:'lesionado', detail:l.desc||'', labelOverride:null, vencido:false};
+    // Retorno <= fecha partido: siempre en duda (cuerpo técnico debe confirmar)
+    if(l.retorno <= fechaPartido) return {status:'en_duda', detail:l.desc+(l.retorno?' · Retorno: '+formatDate(l.retorno):''), labelOverride:'¿Lesionado?', vencido:false};
+  }
+
+  // Ausencia que cubre la fecha del partido:
+  // activa HOY con fechaHasta >= fechaPartido, O programada con fechaDesde <= fechaPartido <= fechaHasta
+  const a = state.ausencias.find(x => {
+    if(x.playerId !== playerId) return false;
+    const desde = x.fechaDesde || '0000-00-00';
+    const hasta = x.fechaHasta || '9999-12-31';
+    return desde <= fechaPartido && hasta >= fechaPartido;
+  });
+  if(a) return {status:'ausente', labelOverride:a.motivo||'Ausente', detail:a.motivo+(a.fechaHasta?' · Hasta: '+formatDate(a.fechaHasta):''), vencido:false};
+
+  return {status:'disponible', detail:'', labelOverride:null, vencido:false};
+}
 function getAllPositions(){
   return Array.from(new Set(state.players.map(p=>p.pos))).sort();
 }
@@ -732,26 +967,65 @@ function getAttendancePct(playerId){
 }
 function getSesionesSinPartido(){
   const fechasPartido=new Set(state.partidos.map(m=>m.fecha));
-  return state.sesiones.filter(s=>!fechasPartido.has(s.fecha));
+  return state.sesiones.filter(s=>!fechasPartido.has(s.fecha) && !s._draft);
 }
 function renderPlantel(){
   const fullList=getPlayersInCategory().map(p=>({p, st:getPlayerStatus(p.id), pct:getAttendancePct(p.id)}));
   const total=fullList.length;
-  const nLesionados=fullList.filter(x=>x.st.status==='lesionado').length;
-  const nAusentes=fullList.filter(x=>x.st.status==='ausente').length;
-  const nSuspendidos=fullList.filter(x=>x.st.status==='suspendido').length;
-  const nDisponibles=fullList.filter(x=>x.st.status==='disponible'||x.st.status==='en_duda').length;
 
   let list=fullList.slice();
+  let partidoActivo=null;
+  let dispList=[], lesionList=[], ausList=[], suspList=[];
+  let futureList=null; // estado futuro calculado cuando hay partido activo
+
+  if(plantelPartidoFilter){
+    partidoActivo=state.partidos.find(m=>String(m.id)===String(plantelPartidoFilter));
+    if(partidoActivo){
+      // Recalcular estado futuro para TODOS los jugadores
+      list=getPlayersInCategory().map(p=>({
+        p,
+        st: getPlayerStatusAtDate(p.id, partidoActivo.fecha),
+        pct: getAttendancePct(p.id)
+      }));
+      futureList=list;
+      // Clasificar para contadores e informe PDF
+      list.forEach(({p,st})=>{
+        if(st.status==='disponible'||st.status==='en_duda') dispList.push({p,st});
+        else if(st.status==='lesionado') lesionList.push({p,st});
+        else if(st.status==='suspendido') suspList.push({p,st});
+        else ausList.push({p,st});
+      });
+    }
+  }
+  // Filtro de estado: aplica siempre (incluso combinado con filtro de partido)
   if(plantelFilter!=='todos') list=list.filter(x=>x.st.status===plantelFilter);
   if(plantelPosFilter.length>0) list=list.filter(x=>plantelPosFilter.includes(x.p.pos));
   sortList(list, sortState.plantel, plantelComparators);
   const posLabel = plantelPosFilter.length===0 ? 'Todas las posiciones' : plantelPosFilter.length+' posición'+(plantelPosFilter.length===1?'':'es')+' seleccionada'+(plantelPosFilter.length===1?'':'s');
 
+  // Contadores: usar estado futuro si hay partido activo, sino estado actual
+  const countList = futureList || fullList;
+  const nDisponibles = countList.filter(x=>x.st.status==='disponible'||x.st.status==='en_duda').length;
+  const nLesionados  = countList.filter(x=>x.st.status==='lesionado').length;
+  const nAusentes    = countList.filter(x=>x.st.status==='ausente').length;
+  const nSuspendidos = countList.filter(x=>x.st.status==='suspendido').length;
+  const realEnDuda = (futureList||[]).filter(x=>x.st.status==='en_duda');
+  if(plantelPartidoFilter && partidoActivo){
+    _informeData = {partido:partidoActivo, dispList, enDudaList:realEnDuda, lesionList, ausList};
+  }
+
   let html='<h2>Plantel — '+state.selectedCategoria+'</h2>';
 
   // Indicadores siempre visibles (sobre el total del plantel, sin importar el filtro activo)
-  html+='<div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;">'
+  // Orden de posiciones rugby (usando constante global POS_ORDER)
+  if(plantelPartidoFilter && partidoActivo){
+    dispList.sort((a,b)=> posSortValGlobal(a.p.pos)-posSortValGlobal(b.p.pos) || a.p.name.localeCompare(b.p.name));
+    lesionList.sort((a,b)=> a.p.name.localeCompare(b.p.name));
+    ausList.sort((a,b)=> a.p.name.localeCompare(b.p.name));
+    suspList.sort((a,b)=> a.p.name.localeCompare(b.p.name));
+  }
+
+  html+='<div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;" class="no-print">'
     +'<div style="background:var(--bg); border:1px solid var(--border); border-radius:var(--r-md); padding:10px 16px; display:flex; flex-direction:column; align-items:center; min-width:80px;">'
     +'<div style="font-size:22px; font-weight:700; font-family:var(--f-display);">'+total+'</div>'
     +'<div style="font-size:11px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.04em;">Total</div></div>'
@@ -769,12 +1043,33 @@ function renderPlantel(){
     +'<div style="font-size:11px; color:var(--neutral-text); text-transform:uppercase; letter-spacing:0.04em;">Suspendidos</div></div>'
     +(plantelFilter!=='todos'?'<div onclick="setPlantelFilter(\'todos\')" style="background:var(--bg); border:1px solid var(--border); border-radius:var(--r-md); padding:10px 16px; display:flex; flex-direction:column; align-items:center; min-width:80px; cursor:pointer;">'
     +'<div style="font-size:11px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.04em; margin-top:8px;">Ver todos</div></div>':'')
-    +'</div>'
-    +(plantelFilter!=='todos'?'<div style="font-size:13px; color:var(--text-secondary); margin-bottom:10px;">Mostrando '+list.length+' de '+total+' jugadores (filtro activo: '+STATUS_INFO[plantelFilter].label+')</div>':'');
+    +'</div>'  // end stats flex
+    +(plantelPartidoFilter && partidoActivo
+      ? // Banner verde (solo pantalla)
+        '<div class="no-print" style="background:var(--success-bg); border:1px solid var(--success-text); border-radius:var(--r-md); padding:10px 14px; margin-bottom:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">'
+        +'<span style="font-size:13px; color:var(--success-text); font-weight:600;">Estado por partido — '+partidoLabel(partidoActivo)+'</span>'
+        +'<span style="font-size:12px; background:var(--success-bg); border:1px solid var(--success-text); border-radius:999px; padding:2px 10px; color:var(--success-text);">✓ '+dispList.length+' disp.</span>'
+        +'<span style="font-size:12px; background:var(--warning-bg); border:1px solid var(--warning-text); border-radius:999px; padding:2px 10px; color:var(--warning-text);">? '+realEnDuda.length+' duda</span>'
+        +'<span style="font-size:12px; background:var(--danger-bg); border:1px solid var(--danger-text); border-radius:999px; padding:2px 10px; color:var(--danger-text);">✕ '+lesionList.length+' les.</span>'
+        +'<span style="font-size:12px; background:var(--info-bg); border:1px solid var(--info-text); border-radius:999px; padding:2px 10px; color:var(--info-text);">— '+ausList.length+' aus.</span>'
+        +'<button class="primary" style="margin-left:auto; font-size:12px; padding:5px 12px;" onclick="if(_informeData){generarInformePDF(_informeData.partido,_informeData.dispList,_informeData.enDudaList,_informeData.lesionList,_informeData.ausList);}">⬇ PDF</button>'
+        +'<a onclick="setPlantelPartidoFilter(\'\')" style="font-size:12px; color:var(--success-text); margin-left:4px;">✕</a>'
+        +'</div>'
+        +(()=>{ return ''; })()
+      : plantelFilter!=='todos'
+        ? '<div style="font-size:13px; color:var(--text-secondary); margin-bottom:10px;">Mostrando '+list.length+' de '+total+' jugadores (filtro activo: '+STATUS_INFO[plantelFilter].label+')</div>'
+        : '');
 
+  // Toolbar y tabla: ocultar en print cuando hay informe de partido activo
+  const tableWrapClass = (plantelPartidoFilter && partidoActivo) ? 'no-print' : '';
+  html+='<div class="'+tableWrapClass+'">';
   html+='<div class="toolbar"><select onchange="setPlantelFilter(this.value)">'
     +'<option value="todos">Todos los estados</option>'
     +Object.entries(STATUS_INFO).map(([k,v])=>'<option value="'+k+'"'+(plantelFilter===k?' selected':'')+'>'+v.label+'</option>').join('')
+    +'</select>'
+    +'<select onchange="setPlantelPartidoFilter(this.value)">'
+    +'<option value="">Estado por partido…</option>'
+    +getProximosPartidos().map(m=>'<option value="'+m.id+'"'+(String(plantelPartidoFilter)===String(m.id)?' selected':'')+'>'+formatDate(m.fecha)+(m.rival?' vs '+m.rival:'')+'</option>').join('')
     +'</select>'
     +'<div style="position:relative;">'
     +'<button onclick="togglePosDropdown()" style="width:100%; text-align:left; display:flex; justify-content:space-between; align-items:center;">'+posLabel+' <span style="opacity:0.6;">▾</span></button>'
@@ -786,10 +1081,11 @@ function renderPlantel(){
   html+='<div class="table-scroll-wrap"><table class="table-scroll"><thead><tr>'+th('Jugador','jugador','plantel')+th('Estado','estado','plantel')+th('Posición','posicion','plantel')+th('% Asistencia','asistencia','plantel')+'</tr></thead><tbody>';
   list.forEach(({p,st,pct})=>{
     const detailEsc=(st.detail||'Sin novedades').replace(/'/g,'&#39;').replace(/"/g,'&quot;');
-    html+='<tr><td data-label="Jugador" style="white-space:nowrap;"><a onclick="openPlayerActions('+p.id+')" style="font-weight:600;">'+p.name+'</a></td><td data-label="Estado" style="white-space:nowrap;"><span style="cursor:pointer;" onclick="event.stopPropagation(); showStatusTooltip(this, \''+detailEsc+'\')">'+badge(st.status)+'</span></td><td data-label="Posición" style="color:var(--text-secondary); white-space:nowrap;">'+p.pos+'</td><td data-label="% Asistencia" style="color:var(--text-secondary); white-space:nowrap;">'+(pct===null?'—':pct+'%')+'</td></tr>';
+    html+='<tr><td data-label="Jugador" style="white-space:nowrap;"><a onclick="openPlayerActions('+p.id+')" style="font-weight:600;">'+p.name+'</a></td><td data-label="Estado" style="white-space:nowrap;"><span style="cursor:pointer;" onclick="event.stopPropagation(); showStatusTooltip(this, \''+detailEsc+'\')">'+badge(st.status, st.vencido, st.labelOverride)+'</span></td><td data-label="Posición" style="color:var(--text-secondary); white-space:nowrap;">'+p.pos+'</td><td data-label="% Asistencia" style="color:var(--text-secondary); white-space:nowrap;">'+(pct===null?'—':pct+'%')+'</td></tr>';
   });
   if(list.length===0) html+='<tr><td colspan="4" style="text-align:center; color:var(--text-secondary); padding:20px;">Sin jugadores para este filtro</td></tr>';
   html+='</tbody></table></div>';
+  html+='</div>'; // end tableWrapClass div
   document.getElementById('main').innerHTML=html;
 }
 function openPlayerActions(playerId){
@@ -798,7 +1094,7 @@ function openPlayerActions(playerId){
   const st=getPlayerStatus(playerId);
   showModal(
     '<h3 style="margin-bottom:4px;">'+p.name+'</h3>'
-    +'<div style="font-size:13px; color:var(--text-secondary); margin-bottom:18px;">'+p.pos+' · '+badge(st.status)+'</div>'
+    +'<div style="font-size:13px; color:var(--text-secondary); margin-bottom:18px;">'+p.pos+' · '+badge(st.status, st.vencido, st.labelOverride)+'</div>'
     +'<div style="display:flex; flex-direction:column; gap:10px;">'
     +'<button onclick="closeModal(); switchTab(\'lesiones\'); createNewLesionForPlayer('+playerId+')">🩹 Registrar lesión</button>'
     +'<button onclick="closeModal(); switchTab(\'ausencias\'); openAusenciaModalForPlayer('+playerId+')">📅 Registrar ausencia</button>'
@@ -815,38 +1111,59 @@ function openAusenciaModalForPlayer(playerId){ setTimeout(()=>{ openAusenciaModa
 function openTarjetaModalForPlayer(playerId){ setTimeout(()=>{ openTarjetaModal(null, null, playerId); }, 100); }
 function openAddPlayerModal(id){
   const isNew = (id===undefined || id===null);
-  const rec = isNew ? {name:'', pos:'', categoria:state.selectedCategoria} : playerById(id);
+  const rec = isNew ? {name:'', pos:'', categoria:state.selectedCategoria, activo:true} : playerById(id);
   const catOptions=state.categorias.map(c=>'<option'+(c===rec.categoria?' selected':'')+'>'+c+'</option>').join('');
+  const isInactivo = rec.activo===false;
   showModal('<h3 style="margin-bottom:14px;">'+(isNew?'Agregar jugador':'Editar jugador')+'</h3>'
     +'<div class="field"><label>Nombre y apellido</label><input id="np-name" type="text" value="'+(rec.name||'')+'"/></div>'
-    +'<div class="field"><label>Posición</label><input id="np-pos" type="text" value="'+(rec.pos||'')+'"/></div>'
+    +'<div class="field"><label>Posición</label>'+posSelect('np-pos', rec.pos||'')+'</div>'
     +'<div class="field"><label>Categoría</label><select id="np-cat">'+catOptions+'</select></div>'
-    +'<div style="display:flex; justify-content:space-between;">'
-    +(isNew?'<span></span>':'<button class="danger" onclick="deletePlayer('+id+')">Eliminar jugador</button>')
+    +(!isNew?'<div style="display:flex; align-items:center; gap:10px; padding:10px 0; border-top:1px solid var(--border); margin-top:4px;">'
+      +'<input type="checkbox" id="np-inactivo" style="width:auto;" '+(isInactivo?'checked':'')+'/>'
+      +'<label for="np-inactivo" style="margin:0; font-weight:400;">Marcar como <strong>Inactivo</strong> — no aparece en ninguna vista</label>'
+      +'</div>':'')
+    +'<div style="display:flex; justify-content:space-between; margin-top:8px;">'
+    +(isNew?'<span></span>':'<button class="danger" onclick="deletePlayer('+id+')">Eliminar</button>')
     +'<div style="display:flex; gap:8px;"><button onclick="closeModal()">Cancelar</button><button class="primary" onclick="saveNewPlayer('+(isNew?'null':id)+')">'+(isNew?'Agregar':'Guardar')+'</button></div></div>');
+}
+function deletePlayer(id){
+  const p=playerById(id); if(!p) return;
+  if(!confirm('¿Eliminar a '+p.name+'? Se eliminarán también sus lesiones, ausencias y tarjetas registradas. Esta acción no se puede deshacer.')) return;
+  state.players=state.players.filter(x=>x.id!==id);
+  state.lesiones=state.lesiones.filter(l=>l.playerId!==id);
+  state.ausencias=state.ausencias.filter(a=>a.playerId!==id);
+  state.tarjetas=state.tarjetas.filter(t=>t.playerId!==id);
+  saveState(); showToast('Jugador eliminado'); closeModal(); renderMain();
 }
 function saveNewPlayer(id){
   const name=document.getElementById('np-name').value.trim();
-  const pos=document.getElementById('np-pos').value.trim();
+  const pos=document.getElementById('np-pos').value;
   const cat=document.getElementById('np-cat').value;
   if(!name) return;
-  if(id===null){ state.players.push({id:state.nextPlayerId++, name, pos:pos||'Sin posición', categoria:cat}); }
-  else { const rec=playerById(id); Object.assign(rec,{name, pos:pos||'Sin posición', categoria:cat}); }
-  saveState(); closeModal(); renderMain();
-}
-function deletePlayer(id){
-  if(!confirm('¿Eliminar a este jugador? Esto no borra su historial de asistencia, lesiones o tarjetas ya registrado.')) return;
-  state.players=state.players.filter(p=>p.id!==id);
-  saveState(); closeModal(); renderMain();
+  const inactivoEl=document.getElementById('np-inactivo');
+  const activo = inactivoEl ? !inactivoEl.checked : true;
+  if(id===null){
+    state.players.push({id:state.nextPlayerId++, name, pos:pos||'Sin posición', categoria:cat, activo:true});
+  } else {
+    const rec=playerById(id);
+    Object.assign(rec,{name, pos:pos||'Sin posición', categoria:cat, activo});
+  }
+  saveState(); showToast(activo?'✓ Jugador guardado':'✓ Jugador marcado como inactivo'); closeModal(); renderMain();
 }
 
 
 // ---------- Lesiones ----------
-let lesionFichaId=null, lesionSubTab='activa', lesionPlazoFilter='todos';
+let lesionFichaId=null, lesionSubTab='activa', lesionPlazoFilter='todos', lesionPartidoFilter='';
 const lesionEstadoInfo={activa:{label:'Activa',cls:'danger'},en_revision:{label:'En revisión',cls:'info'},recuperacion:{label:'Vuelta progresiva',cls:'warning'},alta:{label:'Alta',cls:'success'}};
+function isRetornoVencido(l){
+  if(l.estado==='alta') return false;
+  if(!l.retorno) return false;
+  return l.retorno<=TODAY;
+}
 const lesionEstadoOrder={activa:0,en_revision:1,recuperacion:2,alta:3};
 const lesionComparators={
   jugador:(a,b)=>playerName(a.playerId).localeCompare(playerName(b.playerId)),
+  posicion:(a,b)=>{ const pa=playerById(a.playerId); const pb=playerById(b.playerId); return posSortValGlobal(pa?pa.pos:'')-posSortValGlobal(pb?pb.pos:'') || playerName(a.playerId).localeCompare(playerName(b.playerId)); },
   fecha:(a,b)=>(a.fecha||'').localeCompare(b.fecha||''),
   estado:(a,b)=>lesionEstadoOrder[a.estado]-lesionEstadoOrder[b.estado],
   retorno:(a,b)=>{
@@ -856,8 +1173,9 @@ const lesionComparators={
     return a.retorno.localeCompare(b.retorno);
   }
 };
-function setLesionSubTab(v){ lesionSubTab=v; lesionPlazoFilter='todos'; renderLesiones(); }
+function setLesionSubTab(v){ lesionSubTab=v; lesionPlazoFilter='todos'; lesionPartidoFilter=''; renderLesiones(); }
 function setLesionPlazoFilter(v){ lesionPlazoFilter=v; renderLesiones(); }
+function setLesionPartidoFilter(v){ lesionPartidoFilter=v; renderLesiones(); }
 function createNewLesion(prePlayerId){
   const p=prePlayerId ? playerById(prePlayerId) : getPlayersInCategory()[0];
   const rec={id:state.nextLesionId++, playerId:p?p.id:null, desc:'', fecha:TODAY, estado:'activa', retorno:'', comentarios:[]};
@@ -866,20 +1184,22 @@ function createNewLesion(prePlayerId){
 }
 function openLesionFicha(id){ lesionFichaId=id; renderLesiones(); }
 function backToLesiones(){ lesionFichaId=null; renderLesiones(); }
-function deleteLesion(id){ state.lesiones=state.lesiones.filter(l=>l.id!==id); saveState(); lesionFichaId=null; renderLesiones(); }
+function deleteLesion(id){ if(!confirm('¿Eliminar esta lesión? La acción no se puede deshacer.')) return; state.lesiones=state.lesiones.filter(l=>l.id!==id); saveState(); lesionFichaId=null; renderLesiones(); }
 function saveLesionFicha(id){
   const rec=state.lesiones.find(l=>l.id===id);
+  if(!rec){ showToast('Error: lesión no encontrada','err'); return; }
   rec.playerId=parseInt(document.getElementById('lf-player').value);
   rec.desc=document.getElementById('lf-desc').value;
   rec.fecha=document.getElementById('lf-fecha').value;
   rec.estado=document.getElementById('lf-estado').value;
   rec.retorno=document.getElementById('lf-retorno').value;
-  saveState(); lesionFichaId=null; renderLesiones();
+  saveState(); showToast('✓ Lesión guardada'); lesionFichaId=null; renderLesiones();
 }
 function addLesionComentario(id){
   const ta=document.getElementById('new-comment'); const text=ta.value.trim(); if(!text) return;
   const rec=state.lesiones.find(l=>l.id===id);
-  rec.comentarios=rec.comentarios||[]; rec.comentarios.push({fecha:TODAY, texto:text});
+  if(!rec) return;
+  rec.comentarios=rec.comentarios||[]; rec.comentarios.push({fecha:getTodayStr(), texto:text});
   saveState(); renderLesiones();
 }
 function renderLesiones(){
@@ -888,7 +1208,6 @@ function renderLesiones(){
   const allAlta=state.lesiones.filter(l=>getPlayersInCategory().some(p=>p.id===l.playerId) && l.estado==='alta');
   let list=lesionSubTab==='activa' ? allActive : allAlta;
 
-  // Filtro por plazo de recuperación (solo en tab activa)
   if(lesionSubTab==='activa' && lesionPlazoFilter!=='todos'){
     const hoy=new Date(TODAY);
     list=list.filter(l=>{
@@ -902,14 +1221,29 @@ function renderLesiones(){
       return true;
     });
   }
+  if(lesionSubTab==='activa' && lesionPartidoFilter){
+    const partido=state.partidos.find(m=>String(m.id)===String(lesionPartidoFilter));
+    if(partido) list=list.filter(l=> l.retorno && l.retorno<=partido.fecha);
+  }
 
   sortList(list, sortState.lesiones, lesionComparators);
+
+  // Helper: calcular días de baja
+  function diasBaja(l){
+    if(!l.fecha) return '—';
+    const inicio=new Date(l.fecha);
+    const fin=l.estado==='alta'&&l.retorno ? new Date(l.retorno) : new Date(TODAY);
+    const d=Math.round((fin-inicio)/86400000);
+    return d>=0 ? d+'d' : '—';
+  }
+
   let html='<h2>Lesiones — '+state.selectedCategoria+'</h2>';
   html+='<div class="toolbar"><div class="seg" style="display:flex; border:1px solid var(--border); border-radius:var(--r-md); overflow:hidden;">'
     +'<button class="'+(lesionSubTab==='activa'?'primary':'')+'" style="flex:1; border-radius:0;" onclick="setLesionSubTab(\'activa\')">Activos <span class="badge badge-danger" style="margin-left:4px;">'+allActive.length+'</span></button>'
     +'<button class="'+(lesionSubTab==='alta'?'primary':'')+'" style="flex:1; border-radius:0;" onclick="setLesionSubTab(\'alta\')">Alta <span class="badge badge-success" style="margin-left:4px;">'+allAlta.length+'</span></button>'
     +'</div>';
   if(lesionSubTab==='activa'){
+    const proximos=getProximosPartidos();
     html+='<select onchange="setLesionPlazoFilter(this.value)">'
       +'<option value="todos"'+(lesionPlazoFilter==='todos'?' selected':'')+'>Todos los plazos</option>'
       +'<option value="semana"'+(lesionPlazoFilter==='semana'?' selected':'')+'>Recuperan esta semana</option>'
@@ -918,28 +1252,58 @@ function renderLesiones(){
       +'<option value="anio"'+(lesionPlazoFilter==='anio'?' selected':'')+'>Recuperan en un año</option>'
       +'<option value="sin_fecha"'+(lesionPlazoFilter==='sin_fecha'?' selected':'')+'>Sin fecha de retorno</option>'
       +'</select>';
+    html+='<select onchange="setLesionPartidoFilter(this.value)">'
+      +'<option value="">Recuperados para partido…</option>'
+      +proximos.map(m=>'<option value="'+m.id+'"'+(String(lesionPartidoFilter)===String(m.id)?' selected':'')+'>'+partidoLabel(m)+'</option>').join('')
+      +'</select>';
   }
   html+='<button class="primary" onclick="createNewLesion()">+ Nueva lesión</button></div>';
-  html+='<div class="table-scroll-wrap"><table class="table-scroll"><thead><tr>'+th('Jugador','jugador','lesiones')+'<th>Descripción</th><th>Última actualización</th>'+th('Fecha','fecha','lesiones')+th('Estado','estado','lesiones')+th('Retorno','retorno','lesiones')+'<th></th></tr></thead><tbody>';
+
+  html+='<div class="table-scroll-wrap"><table class="table-scroll"><thead><tr>'
+    +th('Jugador','jugador','lesiones')
+    +'<th style="width:220px;">Descripción</th>'
+    +th('Estado','estado','lesiones')
+    +th('Retorno est.','retorno','lesiones')
+    +'<th></th>'
+    +'</tr></thead><tbody>';
+
   list.forEach(l=>{
     const p=playerById(l.playerId); if(!p) return;
-    const s=lesionEstadoInfo[l.estado]; const lu=getLastUpdate(l);
-    html+='<tr><td data-label="Jugador">'+p.name+'</td>'
-      +'<td data-label="Descripción" style="color:var(--text-secondary);">'+(l.desc||'—')+'</td>'
-      +'<td data-label="Última actualización" style="color:var(--text-secondary);">'+(lu?formatDate(lu.fecha)+': '+lu.texto:'—')+'</td>'
-      +'<td data-label="Fecha" style="color:var(--text-secondary);">'+formatDate(l.fecha)+'</td>'
-      +'<td data-label="Estado"><span class="badge badge-'+s.cls+'">'+s.label+'</span></td>'
-      +'<td data-label="Retorno" style="color:var(--text-secondary);">'+(l.retorno?formatDate(l.retorno):'—')+'</td>'
-      +'<td><a onclick="openLesionFicha('+l.id+')">Editar</a></td></tr>';
+    const s=lesionEstadoInfo[l.estado];
+    const vencido=isRetornoVencido(l);
+    const estadoBadge='<span class="badge badge-'+(vencido?'warning':s.cls)+'">'+(vencido?'¿'+s.label+'?':s.label)+'</span>';
+    const desc=l.desc||'';
+    const descId='desc-'+l.id;
+    const descHtml=desc
+      ?'<div id="'+descId+'" style="max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;" '
+        +'title="'+desc.replace(/"/g,"'")+'" '
+        +'onclick="var el=document.getElementById(\''+descId+'\'); el.style.whiteSpace=el.style.whiteSpace===\'normal\'?\'nowrap\':\'normal\'; el.style.overflow=el.style.overflow===\'visible\'?\'hidden\':\'visible\';">'
+        +desc+'</div>'
+      :'<span style="color:var(--text-secondary);">—</span>';
+    html+='<tr>'
+      +'<td data-label="Jugador" style="font-weight:600; cursor:pointer;" onclick="openLesionFicha('+l.id+')">'+p.name+'</td>'
+      +'<td data-label="Descripción" style="color:var(--text-secondary); max-width:220px;">'+descHtml+'</td>'
+      +'<td data-label="Estado">'+estadoBadge+'</td>'
+      +'<td data-label="Retorno est." style="color:var(--text-secondary);">'+(l.retorno?formatDate(l.retorno):'—')+'</td>'
+      +'<td><a onclick="openLesionFicha('+l.id+')">Editar</a></td>'
+      +'</tr>';
   });
-  if(list.length===0) html+='<tr><td colspan="7" style="text-align:center; color:var(--text-secondary); padding:20px;">Sin lesiones en esta pestaña</td></tr>';
+
+  if(list.length===0) html+='<tr><td colspan="5" style="text-align:center; color:var(--text-secondary); padding:24px;">'
+    +(lesionSubTab==='activa'?'🎉 Sin lesiones activas':'Sin jugadores dados de alta')+'</td></tr>';
   html+='</tbody></table></div>';
   document.getElementById('main').innerHTML=html;
 }
 function renderLesionFicha(){
   const rec=state.lesiones.find(l=>l.id===lesionFichaId);
   const p=playerById(rec.playerId);
-  const playerOptions=getPlayersInCategory().map(pl=>'<option value="'+pl.id+'"'+(pl.id===rec.playerId?' selected':'')+'>'+pl.name+'</option>').join('');
+  // Incluir jugador inactivo si ya está asignado a esta lesión (para no perder la referencia)
+  const activePlayers = getPlayersInCategory();
+  const assignedPlayer = playerById(rec.playerId);
+  const playerPoolForDropdown = (assignedPlayer && assignedPlayer.activo===false)
+    ? [assignedPlayer, ...activePlayers]
+    : activePlayers;
+  const playerOptions=playerPoolForDropdown.map(pl=>'<option value="'+pl.id+'"'+(pl.id===rec.playerId?' selected':'')+'>'+pl.name+(pl.activo===false?' (inactivo)':'')+'</option>').join('');
   let html='<a onclick="backToLesiones()">‹ Volver a lesiones</a>';
   html+='<h2 style="margin-top:12px;">'+(p?p.name:'')+'</h2>';
   html+='<div style="color:var(--text-secondary); margin-bottom:18px;">'+(p?p.pos:'')+'</div>';
@@ -966,7 +1330,7 @@ let tarjetasSubTab='acumuladas';
 const tarjetaTipoInfo={amarilla:{label:'Amarilla',cls:'warning'},roja:{label:'Roja',cls:'danger'}};
 const acumComparators={
   jugador:(a,b)=>a.p.name.localeCompare(b.p.name),
-  posicion:(a,b)=>a.p.pos.localeCompare(b.p.pos),
+  posicion:(a,b)=>posSortValGlobal(a.p.pos)-posSortValGlobal(b.p.pos) || a.p.name.localeCompare(b.p.name),
   amarillas:(a,b)=>a.amarillas-b.amarillas,
   rojas:(a,b)=>a.rojas-b.rojas,
   susp:(a,b)=>a.susp-b.susp,
@@ -988,7 +1352,7 @@ function renderTarjetas(){
     +'<button class="'+(tarjetasSubTab==='individualizada'?'primary':'')+'" onclick="setTarjetasSubTab(\'individualizada\')">Individualizada</button></div>'
     +(tarjetasSubTab==='individualizada'?('<select onchange="setTarjetasPlantelFilter(this.value)" style="margin-left:8px;">'
       +'<option value="todos">Todos los planteles</option>'
-      +['Primera','Intermedia','Lions'].map(pl=>'<option value="'+pl+'"'+(tarjetasPlantelFilter===pl?' selected':'')+'>'+pl+'</option>').join('')
+      +state.categorias.map(pl=>'<option value="'+pl+'"'+(tarjetasPlantelFilter===pl?' selected':'')+'>'+pl+'</option>').join('')
       +'</select><button class="primary" onclick="openTarjetaModal(null)">+ Nueva tarjeta</button>'):'')
     +'</div>';
   if(tarjetasSubTab==='acumuladas'){
@@ -1000,7 +1364,7 @@ function renderTarjetas(){
       .filter(r=>r.recs.length>0);
     sortList(list, sortState.tarjetasAcum, acumComparators);
     html+='<div class="table-scroll-wrap"><table class="table-scroll"><thead><tr>'+th('Jugador','jugador','tarjetasAcum')+th('Posición','posicion','tarjetasAcum')+th('Amarillas','amarillas','tarjetasAcum')+th('Rojas','rojas','tarjetasAcum')+th('Susp. acum.','susp','tarjetasAcum')+th('Estado','estado','tarjetasAcum')+'</tr></thead><tbody>';
-    list.forEach(r=>{ html+='<tr><td data-label="Jugador">'+r.p.name+'</td><td data-label="Posición" style="color:var(--text-secondary);">'+r.p.pos+'</td><td data-label="Amarillas">'+r.amarillas+'</td><td data-label="Rojas">'+r.rojas+'</td><td data-label="Susp. acum.">'+r.susp+'</td><td data-label="Estado">'+badge(r.st.status)+'</td></tr>'; });
+    list.forEach(r=>{ html+='<tr><td data-label="Jugador">'+r.p.name+'</td><td data-label="Posición" style="color:var(--text-secondary);">'+r.p.pos+'</td><td data-label="Amarillas">'+r.amarillas+'</td><td data-label="Rojas">'+r.rojas+'</td><td data-label="Susp. acum.">'+r.susp+'</td><td data-label="Estado">'+badge(r.st.status, r.st.vencido, r.st.labelOverride)+'</td></tr>'; });
     if(list.length===0) html+='<tr><td colspan="6" style="text-align:center; color:var(--text-secondary); padding:20px;">Aún no hay jugadores con tarjetas registradas</td></tr>';
     html+='</tbody></table></div>';
   } else {
@@ -1020,9 +1384,9 @@ function renderTarjetas(){
 function openTarjetaModal(id, fechaPreset, prePlayerId){
   const isNew=id===null;
   const defaultPlayerId=prePlayerId||(getPlayersInCategory()[0]||{}).id;
-  const rec=isNew?{playerId:defaultPlayerId,tipo:'amarilla',partido:'',plantel:'Primera',motivo:'',partidos:0,retorno:''}:state.tarjetas.find(t=>t.id===id);
+  const rec=isNew?{playerId:defaultPlayerId,tipo:'amarilla',partido:'',plantel:'Adulto',motivo:'',partidos:0,retorno:''}:state.tarjetas.find(t=>t.id===id);
   const playerOptions=getPlayersInCategory().map(p=>'<option value="'+p.id+'"'+(p.id===rec.playerId?' selected':'')+'>'+p.name+'</option>').join('');
-  const plantelOptions=['Primera','Intermedia','Lions'].map(pl=>'<option'+(rec.plantel===pl?' selected':'')+'>'+pl+'</option>').join('');
+  const plantelOptions=['Adulto','Intermedia','Lions'].map(pl=>'<option'+(rec.plantel===pl?' selected':'')+'>'+pl+'</option>').join('');
   showModal('<h3 style="margin-bottom:14px;">'+(isNew?'Nueva tarjeta':'Editar tarjeta')+'</h3>'
     +'<div style="display:flex; gap:12px;"><div class="field" style="flex:1;"><label>Jugador</label><select id="tj-player">'+playerOptions+'</select></div>'
     +'<div class="field" style="flex:1;"><label>Tipo</label><select id="tj-tipo"><option value="amarilla"'+(rec.tipo==='amarilla'?' selected':'')+'>Amarilla</option><option value="roja"'+(rec.tipo==='roja'?' selected':'')+'>Roja</option></select></div></div>'
@@ -1046,32 +1410,51 @@ function saveTarjeta(id){
   const retorno=document.getElementById('tj-retorno').value;
   if(id===null) state.tarjetas.push({id:state.nextTarjetaId++, playerId, tipo, partido, plantel, motivo, partidos, retorno});
   else { const rec=state.tarjetas.find(t=>t.id===id); Object.assign(rec,{playerId,tipo,partido,plantel,motivo,partidos,retorno}); }
-  saveState(); closeModal(); renderTarjetas();
+  saveState(); showToast('✓ Tarjeta guardada'); closeModal(); renderTarjetas();
 }
-function deleteTarjeta(id){ state.tarjetas=state.tarjetas.filter(t=>t.id!==id); saveState(); closeModal(); renderTarjetas(); }
+function deleteTarjeta(id){ if(!confirm('¿Eliminar esta tarjeta? La acción no se puede deshacer.')) return; state.tarjetas=state.tarjetas.filter(t=>t.id!==id); saveState(); closeModal(); renderTarjetas(); }
 
 // ---------- Ausencias ----------
-const AUSENCIA_MOTIVOS=['Vacaciones','Trabajo','Estudios','Personal','Otro'];
+const AUSENCIA_MOTIVOS=['Vacaciones','Trabajo','Estudios','Personal','Bloqueado','Sin Información','Otro'];
 let ausenciaFilter='todas';
+let ausenciaPartidoFilter='';
 const ausenciaComparators={
   jugador:(a,b)=>playerName(a.playerId).localeCompare(playerName(b.playerId)),
   motivo:(a,b)=>a.motivo.localeCompare(b.motivo),
   fecha:(a,b)=>(a.fechaDesde||'').localeCompare(b.fechaDesde||'')
 };
-function setAusenciaFilter(v){ ausenciaFilter=v; renderAusencias(); }
+function setAusenciaFilter(v){ ausenciaFilter=v; ausenciaPartidoFilter=''; renderAusencias(); }
+function setAusenciaPartidoFilter(v){ ausenciaPartidoFilter=v; renderAusencias(); }
 function renderAusencias(){
   const all=state.ausencias.filter(a=>getPlayersInCategory().some(p=>p.id===a.playerId));
   const activas=all.filter(a=>isAusenciaActiva(a));
   const programadas=all.filter(a=>a.fechaDesde && a.fechaDesde>TODAY);
   const pasadas=all.filter(a=>!isAusenciaActiva(a) && !(a.fechaDesde && a.fechaDesde>TODAY));
   let list=ausenciaFilter==='pasadas' ? pasadas : ausenciaFilter==='programadas' ? programadas : activas;
+
+  // Filtro por partido próximo: jugadores que vuelven antes/para esa fecha (fechaHasta <= fecha del partido)
+  if((ausenciaFilter==='activas'||ausenciaFilter==='todos') && ausenciaPartidoFilter){
+    const partido=state.partidos.find(m=>String(m.id)===String(ausenciaPartidoFilter));
+    if(partido){
+      list=list.filter(a=> a.fechaHasta && a.fechaHasta<=partido.fecha);
+    }
+  }
+
   sortList(list, sortState.ausencias, ausenciaComparators);
   let html='<h2>Ausencias — '+state.selectedCategoria+'</h2>';
   html+='<div class="toolbar"><div class="seg" style="display:flex; border:1px solid var(--border); border-radius:var(--r-md); overflow:hidden;">'
     +'<button class="'+(ausenciaFilter==='activas'||ausenciaFilter==='todos'?'primary':'')+'" style="flex:1; border-radius:0;" onclick="setAusenciaFilter(\'activas\')">Activas <span class="badge badge-warning" style="margin-left:4px;">'+activas.length+'</span></button>'
     +'<button class="'+(ausenciaFilter==='programadas'?'primary':'')+'" style="flex:1; border-radius:0;" onclick="setAusenciaFilter(\'programadas\')">Programadas <span class="badge badge-info" style="margin-left:4px;">'+programadas.length+'</span></button>'
     +'<button class="'+(ausenciaFilter==='pasadas'?'primary':'')+'" style="flex:1; border-radius:0;" onclick="setAusenciaFilter(\'pasadas\')">Pasadas <span class="badge badge-neutral" style="margin-left:4px;">'+pasadas.length+'</span></button>'
-    +'</div><button class="primary" onclick="openAusenciaModal(null)">+ Nueva ausencia</button></div>';
+    +'</div>';
+  if(ausenciaFilter==='activas'||ausenciaFilter==='todos'){
+    const proximos=getProximosPartidos();
+    html+='<select onchange="setAusenciaPartidoFilter(this.value)">'
+      +'<option value="">Estado por partido…</option>'
+      +proximos.map(m=>'<option value="'+m.id+'"'+(String(ausenciaPartidoFilter)===String(m.id)?' selected':'')+'>'+partidoLabel(m)+'</option>').join('')
+      +'</select>';
+  }
+  html+='<button class="primary" onclick="openAusenciaModal(null)">+ Nueva ausencia</button></div>';
   html+='<table><thead><tr>'+th('Jugador','jugador','ausencias')+th('Motivo','motivo','ausencias')+th('Desde','fecha','ausencias')+'<th>Hasta</th><th>Notas</th><th></th></tr></thead><tbody>';
   list.forEach(a=>{
     const p=playerById(a.playerId);
@@ -1103,214 +1486,255 @@ function saveAusencia(id){
   const fechaDesde=document.getElementById('au-desde').value;
   const fechaHasta=document.getElementById('au-hasta').value;
   const notas=document.getElementById('au-notas').value.trim();
+  if(fechaDesde && fechaHasta && fechaHasta < fechaDesde){
+    alert('La fecha "Hasta" no puede ser anterior a la fecha "Desde".'); return;
+  }
   if(id===null) state.ausencias.push({id:state.nextAusenciaId++, playerId, motivo, fechaDesde, fechaHasta, notas});
   else { const rec=state.ausencias.find(a=>a.id===id); Object.assign(rec,{playerId,motivo,fechaDesde,fechaHasta,notas}); }
-  saveState(); closeModal(); renderAusencias();
+  saveState(); showToast('✓ Ausencia guardada'); closeModal(); renderAusencias();
 }
-function deleteAusencia(id){ state.ausencias=state.ausencias.filter(a=>a.id!==id); saveState(); closeModal(); renderAusencias(); }
+function deleteAusencia(id){ if(!confirm('¿Eliminar esta ausencia? La acción no se puede deshacer.')) return; state.ausencias=state.ausencias.filter(a=>a.id!==id); saveState(); closeModal(); renderAusencias(); }
 
 // ---------- Reportes ----------
 function metricCard(label,value){ return '<div class="card"><div style="font-size:13px; color:var(--text-secondary); margin-bottom:6px;">'+label+'</div><div style="font-size:26px; font-weight:600; font-family:var(--f-display);">'+value+'</div></div>'; }
-// ---------- ARUSA ----------
-const ARUSA_PROXY='/.netlify/functions/arusa';
-const ARUSA_SUPABASE_URL='https://uoxgvpxebtztafcncqwq.supabase.co';
-const ARUSA_SUPABASE_KEY='sb_publishable_n2YbVaYaGAqCvWiPqfGRWw_nFDOvZwW';
-let arusaPartidos=[];
-let arusaSelectedMatch=null;
-let arusaCachedPlanteles={}; // {matchId: {jugadores, updated_at}}
+// ---------- Estado Plantel ----------
+function renderEstadoPlantel(){
+  const plist    = getPlayersInCategory();
+  const hoy      = getTodayStr(); // single call — consistent throughout the function
+  const proximos = state.partidos.filter(m=>m.fecha>=hoy).slice().sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const endOfYear = String(new Date().getFullYear()) + '-12-31';
 
-// Convierte fecha DD/MM/YYYY a YYYY-MM-DD para comparar
-function arusaFechaToISO(f){
-  if(!f) return '';
-  const p=f.split('/');
-  return p.length===3 ? p[2]+'-'+p[1]+'-'+p[0] : '';
-}
+  // ── Columnas por partido ─────────────────────────────────────────────
+  const cols = proximos.map(m=>({
+    id:m.id, fecha:m.fecha, rival:m.rival||'Sin rival',
+    disp:[], enDuda:[], ausDisp:[], suspDisp:[]
+  }));
 
-async function fetchArusaPartidos(){
-  const res=await fetch(ARUSA_PROXY+'?action=calendar');
-  if(!res.ok) throw new Error('Error '+res.status);
-  const data=await res.json();
-  const html=data.content||'';
-  const rows=html.match(/<tr[^>]*>\s*<td class="colstyle-equipo">([\s\S]*?)<\/tr>/g)||[];
-  const partidos=[];
-  rows.forEach(row=>{
-    const link=row.match(/href="(https:\/\/arusa\.cl\/es\/tournament\/(\d+)\/match\/(\d+)\/results)"/);
-    if(!link) return;
-    const url=link[1], torneoId=link[2], matchId=link[3];
-    const titles=row.match(/title="([^"]+)"/g)||[];
-    const clean=t=>t.replace(/title="/,'').replace(/"/,'').trim();
-    const allTitles=titles.map(clean).filter(t=>t&&t!=='Ver');
-    const infoMatch=row.match(/([^&]+)&nbsp;&ndash;&nbsp;([^&]+)&nbsp;&ndash;&nbsp;(\d+\. Fecha \d+)/);
-    let horario='', categoria='', fecha_jornada='';
-    if(infoMatch){ horario=infoMatch[1].trim(); categoria=infoMatch[2].trim(); fecha_jornada=infoMatch[3].trim(); }
-    const fechaMatch=row.match(/(\d{2}\/\d{2}\/\d{4})/);
-    const fecha=fechaMatch?fechaMatch[1]:'';
-    const equipos=allTitles.filter(t=>!t.includes('División')&&!t.includes('Nacional')&&!t.includes('Colegio')&&!t.includes('Club')&&t.length>1).slice(0,2);
-    // Determinar condición local/visita
-    const condicion=equipos[0]==='COBS'?'local':'visita';
-    const rival=equipos[0]==='COBS'?equipos[1]:equipos[0];
-    partidos.push({matchId,torneoId,url,equipos,rival,condicion,horario,categoria,fecha_jornada,fecha});
-  });
-  // Solo partidos pasados (fecha < hoy)
-  const hoy=getTodayStr();
-  return partidos.filter(p=>{ const iso=arusaFechaToISO(p.fecha); return iso && iso<=hoy; });
-}
+  // ── Secciones fijas ──────────────────────────────────────────────────
+  const sinFecha  = [];
+  const sinInfo   = [];
+  const fueraAnio = [];
 
-async function fetchArusaPlantel(torneoId, matchId){
-  const res=await fetch(ARUSA_PROXY+'?action=plantel&torneo='+torneoId+'&match='+matchId);
-  if(!res.ok) throw new Error('Error '+res.status);
-  const data=await res.json();
-  const html=data.content||'';
-  const cobsStart=html.indexOf('<h4 class="padd padd-top padd-bottom h5">COBS</h4>');
-  if(cobsStart<0) return [];
-  const cobsHtml=html.slice(cobsStart);
-  const nextTeam=cobsHtml.indexOf('<h4',10);
-  const section=nextTeam>0?cobsHtml.slice(0,nextTeam):cobsHtml;
-  const rows=section.match(/<tr[^>]*>([\s\S]*?)<\/tr>/g)||[];
-  const jugadores=[];
-  rows.forEach(row=>{
-    const cells={};
-    const tdMatches=row.match(/<td[^>]*class="colstyle-([^"\s]+)[^"]*"[^>]*>([\s\S]*?)<\/td>/g)||[];
-    tdMatches.forEach(td=>{
-      const m=td.match(/<td[^>]*class="colstyle-([^"\s]+)[^"]*"[^>]*>([\s\S]*?)<\/td>/);
-      if(!m) return;
-      cells[m[1]]=m[2].replace(/<[^>]+>/g,'').trim().replace(/\s+/g,' ');
-    });
-    if(cells['jugador']&&cells['jugador']!=='Jugador'){
-      jugadores.push({nombre:cells['jugador']||'',dorsal:cells['dorsal']||'',titular:cells['titular']||'',tries:cells['tries']||'',amarillas:cells['tarjetas-amarillas']||'',rojas:cells['tarjetas-rojas']||''});
-    }
-  });
-  return jugadores;
-}
-
-async function loadArusaCacheFromSupabase(){
-  try{
-    const res=await fetch(ARUSA_SUPABASE_URL+'/rest/v1/arusa_planteles?select=match_id,jugadores,updated_at',{headers:{'apikey':ARUSA_SUPABASE_KEY,'Authorization':'Bearer '+ARUSA_SUPABASE_KEY}});
-    if(!res.ok) return;
-    const rows=await res.json();
-    rows.forEach(r=>{ arusaCachedPlanteles[r.match_id]={jugadores:r.jugadores,updated_at:r.updated_at}; });
-  }catch(e){ console.error('Error cargando caché ARUSA:',e); }
-}
-
-async function saveArusaPlantelToSupabase(partido, jugadores){
-  const row={match_id:partido.matchId,torneo_id:partido.torneoId,fecha:arusaFechaToISO(partido.fecha),rival:partido.rival||'',categoria:partido.categoria||'',condicion:partido.condicion||'',jugadores,updated_at:new Date().toISOString()};
-  await fetch(ARUSA_SUPABASE_URL+'/rest/v1/arusa_planteles',{method:'POST',headers:{'apikey':ARUSA_SUPABASE_KEY,'Authorization':'Bearer '+ARUSA_SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify(row)});
-  arusaCachedPlanteles[partido.matchId]={jugadores,updated_at:row.updated_at};
-}
-
-async function renderArusa(){
-  document.getElementById('main').innerHTML='<h2>ARUSA — Planteles por partido</h2><div style="color:var(--text-secondary); padding:20px;">Cargando partidos...</div>';
-  try{
-    await loadArusaCacheFromSupabase();
-    arusaPartidos=await fetchArusaPartidos();
-    renderArusaMain();
-  }catch(e){
-    document.getElementById('main').innerHTML='<h2>ARUSA — Planteles por partido</h2><div style="color:var(--danger-text); padding:20px;">Error al conectar con ARUSA: '+e.message+'</div>';
-  }
-}
-
-function renderArusaMain(){
-  let html='<h2>ARUSA — Planteles por partido</h2>';
-  if(!arusaPartidos.length){
-    html+='<div style="color:var(--text-secondary); padding:20px;">No se encontraron partidos jugados.</div>';
-    document.getElementById('main').innerHTML=html; return;
-  }
-  const conCache=Object.keys(arusaCachedPlanteles).length;
-  html+='<div style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">'+arusaPartidos.length+' partidos jugados · '+conCache+' planteles guardados. Haz clic en un partido para ver el plantel.</div>';
-  const grupos={};
-  arusaPartidos.forEach(p=>{ const k=p.fecha_jornada||'Sin jornada'; if(!grupos[k]) grupos[k]=[]; grupos[k].push(p); });
-  Object.entries(grupos).sort((a,b)=>b[0].localeCompare(a[0])).forEach(([jornada,partidos])=>{
-    html+='<div style="font-weight:600; font-family:var(--f-display); font-size:14px; margin:16px 0 8px; padding-bottom:4px; border-bottom:2px solid var(--accent); color:var(--accent);">'+jornada+'</div>';
-    html+='<div style="display:flex; flex-direction:column; gap:8px;">';
-    partidos.forEach(p=>{
-      const equipos=p.equipos.join(' vs ')||p.matchId;
-      const isSelected=arusaSelectedMatch&&arusaSelectedMatch.matchId===p.matchId;
-      const cached=arusaCachedPlanteles[p.matchId];
-      const cacheLabel=cached?'<span style="font-size:11px; color:var(--success-text); margin-left:8px;">✓ guardado</span>':'<span style="font-size:11px; color:var(--text-secondary); margin-left:8px;">sin guardar</span>';
-      html+='<div style="background:var(--bg); border:1px solid '+(isSelected?'var(--accent)':'var(--border)')+'; border-radius:var(--r-md); padding:12px 16px;">'
-        +'<div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleArusaPartido(\''+p.torneoId+'\',\''+p.matchId+'\')">'
-        +'<div><div style="font-weight:600;">'+equipos+cacheLabel+'</div>'
-        +'<div style="font-size:12px; color:var(--text-secondary);">'+p.categoria+(p.horario?' · '+p.horario:'')+'</div></div>'
-        +'<div style="font-size:12px; color:var(--text-secondary);">'+p.fecha+'</div>'
-        +'</div>';
-      if(isSelected){
-        html+='<div style="margin-top:10px; display:flex; justify-content:flex-end;">'
-          +'<button onclick="event.stopPropagation(); actualizarPlantelARUSA(\''+p.torneoId+'\',\''+p.matchId+'\')" style="font-size:12px;">↻ Actualizar desde ARUSA</button>'
-          +'</div>';
-        if(arusaSelectedMatch.jugadores===null){
-          html+='<div style="padding-top:10px; color:var(--text-secondary); font-size:13px;">Cargando plantel...</div>';
-        } else {
-          html+=renderArusaPlantelInline(arusaSelectedMatch.jugadores);
+  // ── Clasificar lesiones activas ──────────────────────────────────────
+  state.lesiones
+    .filter(l=>(l.estado==='activa'||l.estado==='en_revision'||l.estado==='recuperacion')
+              && plist.some(p=>p.id===l.playerId))
+    .forEach(l=>{
+      const p=playerById(l.playerId); if(!p) return;
+      const lu=getLastUpdate(l);
+      const desc=l.desc||'';
+      const nota=lu?lu.texto:'';
+      const entry={p, desc, nota, retorno:l.retorno};
+      if(!l.retorno){ sinFecha.push(entry); return; }
+      if(l.retorno>endOfYear){ fueraAnio.push(entry); return; }
+      let asignado=false;
+      for(let i=0;i<proximos.length;i++){
+        if(l.retorno<=proximos[i].fecha){
+          cols[i].enDuda.push(entry); // siempre en duda — cuerpo técnico debe confirmar
+          asignado=true; break;
         }
       }
-      html+='</div>';
+      if(!asignado) sinInfo.push(entry);
     });
-    html+='</div>';
+
+  // ── Clasificar ausencias que vuelven ────────────────────────────────
+  // Incluir activas Y las recién vencidas (últimos 10 días)
+  const hace10=new Date(); hace10.setDate(hace10.getDate()-10);
+  const hace10str=hace10.toISOString().slice(0,10);
+  state.ausencias
+    .filter(a=>{
+      if(!a.fechaHasta) return false;
+      if(!plist.some(p=>p.id===a.playerId)) return false;
+      return isAusenciaActiva(a) || (a.fechaHasta>=hace10str && a.fechaHasta<hoy);
+    })
+    .forEach(a=>{
+      const p=playerById(a.playerId); if(!p) return;
+      for(let i=0;i<proximos.length;i++){
+        if(a.fechaHasta<=proximos[i].fecha){
+          cols[i].ausDisp.push({p, motivo:a.motivo||'', hasta:a.fechaHasta});
+          break;
+        }
+      }
+    });
+
+  // ── Suspendidos ACTIVOS únicamente ──────────────────────────────────
+  const suspActivos=[];
+  state.tarjetas
+    .filter(t=>isSuspensionActiva(t)&&plist.some(p=>p.id===t.playerId))
+    .forEach(t=>{
+      const p=playerById(t.playerId); if(!p) return;
+      suspActivos.push({p, motivo:t.motivo||'Suspensión', retorno:t.retorno});
+      // Asignar a la columna del primer partido para el que ya estará disponible
+      if(t.retorno){
+        for(let i=0;i<proximos.length;i++){
+          if(t.retorno<=proximos[i].fecha){
+            cols[i].suspDisp.push({p, motivo:t.motivo||'Suspensión', retorno:t.retorno});
+            break;
+          }
+        }
+      }
+    });
+
+  // ── Ausencias programadas ────────────────────────────────────────────
+  const ausProgHoy = getTodayStr();
+  const ausProg=[];
+  state.ausencias.forEach(a=>{
+    if(!a.fechaDesde) return;
+    if(!plist.some(p=>p.id===a.playerId)) return;
+    if(a.fechaDesde > ausProgHoy){
+      const p=playerById(a.playerId); if(!p) return;
+      ausProg.push({p, motivo:a.motivo||'', desde:a.fechaDesde, hasta:a.fechaHasta});
+    }
   });
+  ausProg.sort((a,b)=>a.desde.localeCompare(b.desde));
+
+  // ── Helpers ──────────────────────────────────────────────────────────
+  function tarjeta(entry, isEnDuda){
+    const borderColor = isEnDuda ? '#b45309' : '#322a4f';
+    // Solo usar desc (sin nota para evitar duplicados — desc ya es el texto principal)
+    const texto = entry.desc||'';
+    const fechaExtra = entry.retorno ? ' · '+formatDate(entry.retorno) : entry.hasta ? ' · Hasta: '+formatDate(entry.hasta) : '';
+    return '<div style="border-left:3px solid '+borderColor+'; padding:6px 8px; background:var(--bg-secondary); border-radius:0 var(--r-sm) var(--r-sm) 0; margin-bottom:5px;">'
+      +'<div style="font-weight:600; font-size:13px;">'+entry.p.name+'</div>'
+      +'<div class="ep-pos-screen" style="font-size:11px; color:var(--text-secondary);">'+entry.p.pos+'</div>'
+      +(entry.motivo?'<div style="font-size:11px; color:var(--text-secondary); margin-top:2px; font-style:italic;">'+entry.motivo+'</div>':'')
+      +(texto?'<div class="ep-desc-screen" style="font-size:11px; color:var(--text-secondary); margin-top:2px;">'+texto+fechaExtra+'</div>':'')
+      +(isEnDuda&&texto?'<div class="ep-desc-print" style="display:none; font-size:10px; color:#555;">'+texto+fechaExtra+'</div>':'')
+      +'</div>';
+  }
+
+  function chip(entry){
+    const desc=entry.desc||entry.motivo||'';
+    const extra=entry.retorno?'Retorno: '+formatDate(entry.retorno):entry.hasta&&!entry.rangoStr?'Hasta: '+formatDate(entry.hasta):entry.desde&&!entry.rangoStr?'Desde: '+formatDate(entry.desde):'';
+    return '<div class="ep-chip" style="display:inline-block; border:1px solid var(--border); border-radius:var(--r-md); padding:7px 11px; margin:0 6px 6px 0; background:var(--bg); vertical-align:top; max-width:260px;">'
+      +'<div style="font-weight:600; font-size:13px;">'+entry.p.name
+      +' <span class="ep-chip-pos-print" style="display:none; font-weight:400; font-size:11px; color:#555;">('+entry.p.pos+')</span></div>'
+      +'<div class="ep-chip-pos-screen" style="font-size:11px; color:var(--text-secondary);">'+entry.p.pos+'</div>'
+      +(desc?'<div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">'+desc+(extra&&!entry.rangoStr?' · '+extra:'')+'</div>':'')
+      +(entry.rangoStr?'<div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">📅 '+entry.rangoStr+'</div>':'')
+      +(entry.perdidosStr?'<div class="ep-chip-desc" style="font-size:11px; color:var(--danger-text); margin-top:2px;">Se pierde: '+entry.perdidosStr+'</div>':'')
+      +'</div>';
+  }
+
+  function seccionFija(icono, titulo, items, bgColor){
+    if(!items.length) return '';
+    return '<div style="margin-bottom:10px; break-inside:avoid;">'
+      +'<div style="background:'+bgColor+'; color:#fff; padding:7px 14px; border-radius:var(--r-md) var(--r-md) 0 0; display:flex; align-items:center; gap:8px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">'
+      +'<span>'+icono+'</span>'
+      +'<span style="font-family:var(--f-display); font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">'+titulo+'</span>'
+      +'<span style="margin-left:8px; background:rgba(255,255,255,0.25); border-radius:999px; padding:1px 9px; font-size:12px; font-weight:700;">'+items.length+'</span>'
+      +'</div>'
+      +'<div style="border:1px solid var(--border); border-top:none; border-radius:0 0 var(--r-md) var(--r-md); padding:10px 10px 4px 10px; background:var(--bg);">'
+      +items.map(chip).join('')
+      +'</div></div>';
+  }
+
+  // ── HTML ─────────────────────────────────────────────────────────────
+  const colsConDatos = cols.filter(c=>c.disp.length||c.enDuda.length||c.ausDisp.length||c.suspDisp.length);
+
+  let html='<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;" class="no-print">'
+    +'<div><h2 style="margin:0;">Estado del Plantel</h2>'
+    +'<div style="color:var(--text-secondary); font-size:12px; margin-top:2px;">'+state.selectedCategoria+' · Actualizado '+formatDate(hoy)+'</div></div>'
+    +'<button class="primary" onclick="window.print()">⬇ Exportar PDF</button>'
+    +'</div>';
+
+  // Solo columnas con regresos + ausencias programadas como columnas
+  html+=seccionFija('○','Sin información de retorno', sinInfo, '#4a4a6a');
+
+  // Datos compartidos
+  const todosPartidosDisp = state.partidos.filter(m=>m.fecha>=hoy).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const todasAusencias = state.ausencias.filter(a => plist.some(p=>p.id===a.playerId));
+  const todasLesionesActivas = state.lesiones.filter(l =>
+    (l.estado==='activa'||l.estado==='en_revision'||l.estado==='recuperacion') && plist.some(p=>p.id===l.playerId)
+  );
+
+  function seccionHorizontal(titulo, icono, color, grupos, renderCol){
+    if(!grupos.length) return '';
+    return '<div style="margin-bottom:14px; break-inside:avoid;">'
+      +'<div style="background:'+color+'; color:#fff; padding:7px 14px; border-radius:var(--r-md) var(--r-md) 0 0; display:flex; align-items:center; gap:8px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">'
+      +'<span>'+icono+'</span>'
+      +'<span style="font-family:var(--f-display); font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">'+titulo+'</span>'
+      +'</div>'
+      +'<div style="border:1px solid var(--border); border-top:none; border-radius:0 0 var(--r-md) var(--r-md); padding:10px; background:var(--bg); overflow-x:auto;">'
+      +'<div style="display:flex; gap:16px; min-width:max-content;">'
+      +grupos.map(renderCol).join('')
+      +'</div></div></div>';
+  }
+
+  function colHeader(partido){
+    return '<div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--accent); border-bottom:2px solid var(--accent); padding-bottom:3px; margin-bottom:6px;">'
+      +formatDate(partido.fecha)+(partido.rival?' vs '+partido.rival:'')+'</div>';
+  }
+  function playerRow(name, pos, sub){
+    return '<div style="padding:3px 0; border-bottom:1px solid var(--border); font-size:12px;">'
+      +'<span style="font-weight:600;">'+name+'</span>'
+      +'<span style="color:var(--text-secondary); font-size:10px; margin-left:5px;">'+pos+'</span>'
+      +(sub?'<div style="font-size:10px; color:var(--text-secondary); font-style:italic;">'+sub+'</div>':'')
+      +'</div>';
+  }
+
+  // 1. REGRESOS ESPERADOS (cols ya calculados arriba: disp + enDuda + ausDisp + suspDisp)
+  html += seccionHorizontal('🔄 Regresos esperados','🔄','#2d6a4f', colsConDatos, col=>{
+    const total = col.disp.length+col.enDuda.length+col.ausDisp.length+col.suspDisp.length;
+    if(!total) return '';
+    return '<div style="min-width:160px; max-width:210px;">'
+      +colHeader({fecha:col.fecha, rival:col.rival})
+      +(col.disp.length?'<div style="font-size:10px; font-weight:700; color:var(--success-text); margin:4px 0 2px;">DISPONIBLES</div>'+col.disp.map(e=>playerRow(e.p.name,e.p.pos,e.desc)).join(''):'')
+      +(col.enDuda.length?'<div style="font-size:10px; font-weight:700; color:var(--warning-text); margin:4px 0 2px;">EN DUDA</div>'+col.enDuda.map(e=>playerRow(e.p.name,e.p.pos,e.desc)).join(''):'')
+      +(col.ausDisp.length?'<div style="font-size:10px; font-weight:700; color:var(--info-text); margin:4px 0 2px;">VUELTA AUSENCIA</div>'+col.ausDisp.map(e=>playerRow(e.p.name,e.p.pos,e.motivo)).join(''):'')
+      +(col.suspDisp.length?'<div style="font-size:10px; font-weight:700; color:var(--warning-text); margin:4px 0 2px;">VUELTA SUSPENSIÓN</div>'+col.suspDisp.map(e=>playerRow(e.p.name,e.p.pos,e.motivo)).join(''):'')
+      +'</div>';
+  });
+
+  // 2. AUSENTES POR PARTIDO
+  const ausMap = {};
+  todosPartidosDisp.forEach(m=>{ ausMap[m.id]={partido:m, jugadores:[]}; });
+  todasAusencias.forEach(a=>{
+    const p=playerById(a.playerId); if(!p) return;
+    const desde=a.fechaDesde||'0000-00-00', hasta=a.fechaHasta||'9999-12-31';
+    todosPartidosDisp.forEach(m=>{
+      if(m.fecha>=desde&&m.fecha<=hasta&&!ausMap[m.id].jugadores.find(j=>j.p.id===p.id))
+        ausMap[m.id].jugadores.push({p, motivo:a.motivo||''});
+    });
+  });
+  const ausGrupos = Object.values(ausMap).filter(g=>g.jugadores.length).sort((a,b)=>a.partido.fecha.localeCompare(b.partido.fecha));
+  html += seccionHorizontal('Ausentes por partido','📋','#2a6496', ausGrupos, g=>
+    '<div style="min-width:160px; max-width:210px;">'
+    +colHeader(g.partido)
+    +g.jugadores.map(e=>playerRow(e.p.name,e.p.pos,e.motivo)).join('')
+    +'</div>'
+  );
+
+  // 3. LESIONADOS POR PARTIDO
+  const lesMap = {};
+  todosPartidosDisp.forEach(m=>{ lesMap[m.id]={partido:m, jugadores:[]}; });
+  todasLesionesActivas.forEach(l=>{
+    const p=playerById(l.playerId); if(!p) return;
+    todosPartidosDisp.forEach(m=>{
+      if((!l.retorno||l.retorno>m.fecha)&&!lesMap[m.id].jugadores.find(j=>j.p.id===p.id))
+        lesMap[m.id].jugadores.push({p, desc:l.desc||''});
+    });
+  });
+  const lesGrupos = Object.values(lesMap).filter(g=>g.jugadores.length).sort((a,b)=>a.partido.fecha.localeCompare(b.partido.fecha));
+  html += seccionHorizontal('Lesionados por partido','🩹','#7f1d1d', lesGrupos, g=>
+    '<div style="min-width:160px; max-width:210px;">'
+    +colHeader(g.partido)
+    +g.jugadores.map(e=>playerRow(e.p.name,e.p.pos,e.desc)).join('')
+    +'</div>'
+  );
+
+  html+=seccionFija('◐','Lesionados — Sin fecha de vuelta', sinFecha, '#7c5c3a');
+
+  if(suspActivos.length){
+    html+=seccionFija('🟨','Suspendidos',
+      suspActivos.map(e=>({p:e.p, desc:'', motivo:e.motivo, retorno:e.retorno})),
+      '#b45309');
+  }
+  html+=seccionFija('✕','Fuera este año', fueraAnio, '#555');
+
   document.getElementById('main').innerHTML=html;
-}
 
-function renderArusaPlantelInline(jugadores){
-  if(!jugadores||!jugadores.length) return '<div style="padding-top:10px; color:var(--text-secondary); font-size:13px;">Sin plantel registrado en ARUSA.</div>';
-  let html='<div style="margin-top:12px; border-top:1px solid var(--border); padding-top:12px; overflow-x:auto;">';
-  html+='<table style="width:100%; font-size:12px; min-width:300px;"><thead><tr>'
-    +'<th style="text-align:left; padding:4px 8px; color:var(--text-secondary);">#</th>'
-    +'<th style="text-align:left; padding:4px 8px; color:var(--text-secondary);">Jugador</th>'
-    +'<th style="text-align:center; padding:4px 8px; color:var(--text-secondary);">Titular</th>'
-    +'<th style="text-align:center; padding:4px 8px; color:var(--text-secondary);">Tries</th>'
-    +'<th style="text-align:center; padding:4px 8px; color:var(--text-secondary);">TA</th>'
-    +'<th style="text-align:center; padding:4px 8px; color:var(--text-secondary);">TR</th>'
-    +'</tr></thead><tbody>';
-  jugadores.forEach(j=>{
-    const isTit=j.titular&&j.titular!=='‐'&&j.titular!=='';
-    html+='<tr style="background:'+(isTit?'var(--bg-secondary)':'transparent')+'">'
-      +'<td style="padding:4px 8px; color:var(--text-secondary);">'+j.dorsal+'</td>'
-      +'<td style="padding:4px 8px; font-weight:'+(isTit?'600':'400')+';">'+j.nombre+'</td>'
-      +'<td style="padding:4px 8px; text-align:center;">'+(isTit?'✓':'')+'</td>'
-      +'<td style="padding:4px 8px; text-align:center; color:var(--text-secondary);">'+(j.tries&&j.tries!=='‐'?j.tries:'')+'</td>'
-      +'<td style="padding:4px 8px; text-align:center; color:var(--warning-text);">'+(j.amarillas&&j.amarillas!=='‐'?j.amarillas:'')+'</td>'
-      +'<td style="padding:4px 8px; text-align:center; color:var(--danger-text);">'+(j.rojas&&j.rojas!=='‐'?j.rojas:'')+'</td>'
-      +'</tr>';
-  });
-  html+='</tbody></table></div>';
-  return html;
 }
-
-async function toggleArusaPartido(torneoId, matchId){
-  if(arusaSelectedMatch&&arusaSelectedMatch.matchId===matchId){ arusaSelectedMatch=null; renderArusaMain(); return; }
-  const cached=arusaCachedPlanteles[matchId];
-  if(cached){ arusaSelectedMatch={matchId,torneoId,jugadores:cached.jugadores}; renderArusaMain(); return; }
-  arusaSelectedMatch={matchId,torneoId,jugadores:null};
-  renderArusaMain();
-  try{
-    const partido=arusaPartidos.find(p=>p.matchId===matchId);
-    const jugadores=await fetchArusaPlantel(torneoId,matchId);
-    arusaSelectedMatch.jugadores=jugadores;
-    if(partido) await saveArusaPlantelToSupabase(partido,jugadores);
-    renderArusaMain();
-  }catch(e){
-    arusaSelectedMatch={matchId,torneoId,jugadores:[]};
-    renderArusaMain();
-    console.error('Error cargando plantel ARUSA:',e);
-  }
-}
-
-async function actualizarPlantelARUSA(torneoId, matchId){
-  const partido=arusaPartidos.find(p=>p.matchId===matchId);
-  arusaSelectedMatch={matchId,torneoId,jugadores:null};
-  renderArusaMain();
-  try{
-    const jugadores=await fetchArusaPlantel(torneoId,matchId);
-    arusaSelectedMatch.jugadores=jugadores;
-    if(partido) await saveArusaPlantelToSupabase(partido,jugadores);
-    renderArusaMain();
-  }catch(e){
-    arusaSelectedMatch={matchId,torneoId,jugadores:arusaCachedPlanteles[matchId]?.jugadores||[]};
-    renderArusaMain();
-    console.error('Error actualizando plantel ARUSA:',e);
-  }
-}
-
 
 function renderReportes(){
   const plist=getPlayersInCategory();
@@ -1395,24 +1819,49 @@ function renderReportes(){
 
 // ---------- Configuración ----------
 function updateClubName(v){ state.clubName=v||'Club'; saveState(); renderSidebar(); renderConfiguracion(); }
+function openEditCategoriaModal(idx){
+  const nombre = state.categorias[idx];
+  showModal('<h3 style="margin-bottom:14px;">Editar categoría</h3>'
+    +'<div class="field"><label>Nombre</label><input id="edit-cat-name" type="text" value="'+nombre+'"/></div>'
+    +'<div style="display:flex; justify-content:space-between; margin-top:8px;">'
+    +'<button class="danger" onclick="removeCategoria('+idx+')">Eliminar</button>'
+    +'<div style="display:flex; gap:8px;"><button onclick="closeModal()">Cancelar</button>'
+    +'<button class="primary" onclick="saveCategoriaEdit('+idx+')">Guardar</button></div>'
+    +'</div>');
+}
+function saveCategoriaEdit(idx){
+  const v=document.getElementById('edit-cat-name').value.trim(); if(!v) return;
+  const old=state.categorias[idx];
+  state.categorias[idx]=v;
+  // Actualizar jugadores con la categoría antigua
+  state.players.forEach(p=>{ if(p.categoria===old) p.categoria=v; });
+  if(state.selectedCategoria===old) state.selectedCategoria=v;
+  saveState(); showToast('✓ Categoría actualizada'); closeModal(); renderSidebar(); renderConfiguracion();
+}
 function addCategoria(){
   const input=document.getElementById('new-cat'); const v=input.value.trim(); if(!v) return;
   state.categorias.push(v); input.value=''; saveState(); renderSidebar(); renderConfiguracion();
 }
 function removeCategoria(idx){
   const removed=state.categorias[idx];
+  const jugadoresEnCat=state.players.filter(p=>p.categoria===removed).length;
+  if(jugadoresEnCat>0){
+    if(!confirm('La categoría "'+removed+'" tiene '+jugadoresEnCat+' jugadores registrados. ¿Eliminar de todas formas? Los jugadores quedarán sin categoría asignada.')) return;
+  } else {
+    if(!confirm('¿Eliminar la categoría "'+removed+'"?')) return;
+  }
   state.categorias.splice(idx,1);
   if(state.selectedCategoria===removed) state.selectedCategoria=state.categorias[0]||'';
   saveState(); renderSidebar(); renderConfiguracion();
 }
 function saveNewPlayerFromConfig(){
   const name=document.getElementById('cfg-name').value.trim();
-  const pos=document.getElementById('cfg-pos').value.trim();
+  const pos=document.getElementById('cfg-pos').value;
   const cat=document.getElementById('cfg-cat').value;
   if(!name) return;
-  state.players.push({id:state.nextPlayerId++, name, pos:pos||'Sin posición', categoria:cat});
+  state.players.push({id:state.nextPlayerId++, name, pos:pos||'Sin posición', categoria:cat, activo:true});
   saveState();
-  document.getElementById('cfg-name').value=''; document.getElementById('cfg-pos').value='';
+  document.getElementById('cfg-name').value='';
   renderConfiguracion();
 }
 function bulkAddPlayers(){
@@ -1421,7 +1870,7 @@ function bulkAddPlayers(){
   let added=0;
   lines.forEach(line=>{
     const parts=line.split(',').map(s=>s.trim());
-    if(parts[0]){ state.players.push({id:state.nextPlayerId++, name:parts[0], pos:parts[1]||'Sin posición', categoria:state.selectedCategoria}); added++; }
+    if(parts[0]){ state.players.push({id:state.nextPlayerId++, name:parts[0], pos:parts[1]||'Sin posición', categoria:state.selectedCategoria, activo:true}); added++; }
   });
   ta.value=''; saveState();
   document.getElementById('bulk-result').textContent=added+' jugador'+(added===1?'':'es')+' agregado'+(added===1?'':'s')+' a '+state.selectedCategoria+'.';
@@ -1437,7 +1886,7 @@ function handleExcelFile(event){
       let added=0;
       lines.forEach(line=>{
         const parts=line.split(',').map(s=>s.trim());
-        if(parts[0] && parts[0].toLowerCase()!=='nombre'){ state.players.push({id:state.nextPlayerId++, name:parts[0], pos:parts[1]||'Sin posición', categoria:state.selectedCategoria}); added++; }
+        if(parts[0] && parts[0].toLowerCase()!=='nombre'){ state.players.push({id:state.nextPlayerId++, name:parts[0], pos:parts[1]||'Sin posición', categoria:state.selectedCategoria, activo:true}); added++; }
       });
       finish(added);
     };
@@ -1464,11 +1913,6 @@ function handleExcelFile(event){
     reader.readAsArrayBuffer(file);
   }
 }
-function resetState(){
-  if(!confirm('¿Restablecer todos los datos a los valores de ejemplo? Se perderán los cambios.')) return;
-  state=JSON.parse(JSON.stringify(DEFAULT_STATE));
-  saveState(); render();
-}
 function renderConfiguracion(){
   let html='<h2>Configuración</h2>';
   html+='<h3>Datos del club</h3>';
@@ -1476,11 +1920,14 @@ function renderConfiguracion(){
   html+='<div style="color:var(--text-secondary); font-size:12px;">El logo se genera con las iniciales del nombre.</div>';
   html+='<h3>Equipos / categorías</h3>';
   state.categorias.forEach((c,idx)=>{
-    html+='<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border);"><span>'+c+(c===state.selectedCategoria?' <span class="badge badge-info">activa</span>':'')+'</span><button class="danger" onclick="removeCategoria('+idx+')">Eliminar</button></div>';
+    html+='<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border);">'
+      +'<span>'+c+(c===state.selectedCategoria?' <span class="badge badge-info">activa</span>':'')+'</span>'
+      +'<button onclick="openEditCategoriaModal('+idx+')">Editar</button>'
+      +'</div>';
   });
   html+='<div style="display:flex; gap:8px; margin-top:12px;"><input id="new-cat" type="text" placeholder="Ej: M16" style="flex:1;"/><button class="primary" onclick="addCategoria()">Agregar</button></div>';
   html+='<h3>Agregar jugador</h3>';
-  html+='<div id="screen-cfg-addplayer" style="display:flex; gap:12px; align-items:flex-end;"><div class="field" style="flex:1; margin-bottom:0;"><label>Nombre y apellido</label><input id="cfg-name" type="text"/></div><div class="field" style="flex:1; margin-bottom:0;"><label>Posición</label><input id="cfg-pos" type="text"/></div><div class="field" style="flex:1; margin-bottom:0;"><label>Categoría</label><select id="cfg-cat">'+state.categorias.map(c=>'<option'+(c===state.selectedCategoria?' selected':'')+'>'+c+'</option>').join('')+'</select></div><button class="primary" onclick="saveNewPlayerFromConfig()">Agregar</button></div>';
+  html+='<div id="screen-cfg-addplayer" style="display:flex; gap:12px; align-items:flex-end;"><div class="field" style="flex:1; margin-bottom:0;"><label>Nombre y apellido</label><input id="cfg-name" type="text"/></div><div class="field" style="flex:1; margin-bottom:0;"><label>Posición</label>'+posSelect('cfg-pos','')+' </div><div class="field" style="flex:1; margin-bottom:0;"><label>Categoría</label><select id="cfg-cat">'+state.categorias.map(c=>'<option'+(c===state.selectedCategoria?' selected':'')+'>'+c+'</option>').join('')+'</select></div><button class="primary" onclick="saveNewPlayerFromConfig()">Agregar</button></div>';
   html+='<h3>Carga masiva de jugadores</h3>';
   html+='<div style="color:var(--text-secondary); font-size:12px; margin-bottom:8px;">Se agregarán a la categoría activa: <strong>'+state.selectedCategoria+'</strong></div>';
   html+='<div class="field"><label>Subir archivo Excel o CSV (columnas: nombre, posición)</label><input type="file" accept=".xlsx,.xls,.csv" onchange="handleExcelFile(event)"/></div>';
@@ -1491,22 +1938,45 @@ function renderConfiguracion(){
   html+='<h3 style="border-top:1px solid var(--border); padding-top:14px;">Jugadores registrados</h3>';
   html+='<div class="field"><input id="cfg-search" type="text" placeholder="Buscar jugador..." oninput="renderConfigPlayerList(this.value)"/></div>';
   html+='<div id="cfg-player-list"></div>';
-  html+='<h3 style="border-top:1px solid var(--border); padding-top:14px;">Datos de la app</h3>';
-  html+='<button class="danger" onclick="resetState()">Restablecer datos de ejemplo</button>';
   document.getElementById('main').innerHTML=html;
   renderConfigPlayerList('');
 }
 function renderConfigPlayerList(query){
   const q=(query||'').trim().toLowerCase();
-  let list=state.players.slice().sort((a,b)=>a.name.localeCompare(b.name));
-  if(q) list=list.filter(p=>p.name.toLowerCase().includes(q));
+  let all=state.players.slice().sort((a,b)=>a.name.localeCompare(b.name));
+  if(q) all=all.filter(p=>p.name.toLowerCase().includes(q));
+  const activos=all.filter(p=>p.activo!==false);
+  const inactivos=all.filter(p=>p.activo===false);
+
   let html='<table><thead><tr><th>Jugador</th><th>Posición</th><th>Categoría</th><th></th></tr></thead><tbody>';
-  list.forEach(p=>{
+  activos.forEach(p=>{
     html+='<tr><td data-label="Jugador">'+p.name+'</td><td data-label="Posición" style="color:var(--text-secondary);">'+p.pos+'</td><td data-label="Categoría" style="color:var(--text-secondary);">'+p.categoria+'</td><td><a onclick="openAddPlayerModal('+p.id+')">Editar</a></td></tr>';
   });
-  if(list.length===0) html+='<tr><td colspan="4" style="text-align:center; color:var(--text-secondary); padding:20px;">Sin resultados</td></tr>';
+  if(activos.length===0) html+='<tr><td colspan="4" style="text-align:center; color:var(--text-secondary); padding:20px;">Sin resultados</td></tr>';
   html+='</tbody></table>';
+
+  if(inactivos.length){
+    html+='<h4 style="margin-top:20px; color:var(--text-secondary); border-top:1px solid var(--border); padding-top:12px;">Inactivos <span style="font-size:12px; font-weight:400;">(no aparecen en ninguna vista)</span></h4>';
+    html+='<table><thead><tr><th>Jugador</th><th>Posición</th><th>Categoría</th><th></th></tr></thead><tbody>';
+    inactivos.forEach(p=>{
+      html+='<tr style="opacity:0.6;">'
+        +'<td data-label="Jugador" style="color:var(--text-secondary);">'+p.name+'</td>'
+        +'<td data-label="Posición" style="color:var(--text-secondary);">'+p.pos+'</td>'
+        +'<td data-label="Categoría" style="color:var(--text-secondary);">'+p.categoria+'</td>'
+        +'<td style="display:flex; gap:8px;">'
+        +'<a onclick="reactivarJugador('+p.id+')" style="color:var(--success-text);">Reactivar</a>'
+        +'<a onclick="openAddPlayerModal('+p.id+')">Editar</a>'
+        +'</td></tr>';
+    });
+    html+='</tbody></table>';
+  }
+
   document.getElementById('cfg-player-list').innerHTML=html;
+}
+function reactivarJugador(id){
+  const rec=playerById(id); if(!rec) return;
+  rec.activo=true;
+  saveState(); showToast('✓ '+rec.name+' reactivado'); renderConfigPlayerList(document.getElementById('cfg-search')?.value||'');
 }
 
 // ---------- storage (Supabase compartido) ----------
@@ -1564,8 +2034,12 @@ async function loadState(){
   if(state.nextAusenciaId===undefined) state.nextAusenciaId=DEFAULT_STATE.nextAusenciaId;
   if(!state.partidos) state.partidos=JSON.parse(JSON.stringify(DEFAULT_STATE.partidos));
   if(state.nextPartidoId===undefined) state.nextPartidoId=DEFAULT_STATE.nextPartidoId;
-  render();
-  startRemoteSync();
+  // Bug 2: ensure nextPlayerId exists
+  if(state.nextPlayerId===undefined) state.nextPlayerId=DEFAULT_STATE.nextPlayerId||100;
+  // Bug 3: ensure nextLesionId, nextTarjetaId exist
+  if(state.nextLesionId===undefined) state.nextLesionId=DEFAULT_STATE.nextLesionId||1;
+  if(state.nextTarjetaId===undefined) state.nextTarjetaId=DEFAULT_STATE.nextTarjetaId||1;
+  // Don't call render() here — safeRender() called by .then() handles it
 }
 
 let syncInFlight=false;
@@ -1593,8 +2067,13 @@ function startRemoteSync(){
 
 function render(){ renderSidebar(); renderMain(); }
 let __loaded=false;
-function safeRender(){ __loaded=true; try{ render(); }catch(e){ console.error('render error', e); document.getElementById('main').innerHTML='<p style="color:var(--danger-text);">Error al cargar. Intenta recargar la página.</p>'; } }
-setTimeout(function(){ if(!__loaded){ console.warn('Failsafe: forzando datos por defecto tras timeout'); state=JSON.parse(JSON.stringify(DEFAULT_STATE)); safeRender(); } }, 2500);
+let __syncStarted=false;
+function safeRender(){
+  __loaded=true;
+  try{ render(); }catch(e){ console.error('render error', e); document.getElementById('main').innerHTML='<p style="color:var(--danger-text);">Error al cargar. Intenta recargar la página.</p>'; }
+  if(!__syncStarted){ __syncStarted=true; startRemoteSync(); }
+}
+setTimeout(function(){ if(!__loaded){ console.warn('Failsafe: forzando datos por defecto tras timeout'); state=JSON.parse(JSON.stringify(DEFAULT_STATE)); safeRender(); } }, 8000);
 try{
   loadState().then(safeRender).catch(function(e){ console.error('loadState falló', e); if(!__loaded){ state=JSON.parse(JSON.stringify(DEFAULT_STATE)); safeRender(); } });
 }catch(e){
