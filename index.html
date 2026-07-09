@@ -221,6 +221,11 @@ const DEFAULT_STATE={
   clubName:'COBS',
   categorias:['Adulto','M19','M17'],
   selectedCategoria:'Adulto',
+  emailConfig:{
+    destinatarios:[],
+    diaSemana:1, // 0=Dom,1=Lun,2=Mar,3=Mié,4=Jue,5=Vie,6=Sáb
+    ultimoEnvio:''
+  },
   players:[
     {id:1,name:"Agustin Lathrop",pos:"Pilar",categoria:"Adulto"},
     {id:2,name:"Alberto Armstrong",pos:"Scrum half",categoria:"Adulto"},
@@ -1972,6 +1977,32 @@ function renderConfigPlayerList(query){
   }
 
   document.getElementById('cfg-player-list').innerHTML=html;
+
+  // Sección de correo
+  const cfg = state.emailConfig || {};
+  const dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const proximoPartido = getProximoPartidoSemana();
+  let emailHtml = '<h3 style="margin-top:24px; border-top:1px solid var(--border); padding-top:16px;">📧 Correo semanal automático</h3>';
+  emailHtml += '<div class="field"><label>Destinatarios <span style="font-weight:400; color:var(--text-secondary);">(un email por línea)</span></label>'
+    +'<textarea id="email-destinatarios" rows="3" placeholder="entrenador@club.cl\npreparador@club.cl">'+(cfg.destinatarios||[]).join('\n')+'</textarea></div>';
+  emailHtml += '<div class="field"><label>Día de envío automático</label>'
+    +'<select id="email-dia">'
+    +dias.map((d,i)=>'<option value="'+i+'"'+(cfg.diaSemana===i?' selected':'')+'>'+d+'</option>').join('')
+    +'</select></div>';
+  emailHtml += '<div style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;">El correo se enviará automáticamente ese día solo si hay un partido esa semana. Incluye regresos de lesión y vuelta de ausencias.</div>';
+
+  // Último envío
+  if(cfg.ultimoEnvio){
+    emailHtml += '<div style="font-size:12px; color:var(--success-text); margin-bottom:10px;">✓ Último envío: '+formatDate(cfg.ultimoEnvio)+'</div>';
+  }
+
+  emailHtml += '<div style="display:flex; gap:8px; flex-wrap:wrap;">';
+  emailHtml += '<button class="primary" onclick="saveEmailConfig()">Guardar configuración</button>';
+  emailHtml += '<button onclick="enviarCorreoSemanal(true)" '+(proximoPartido?'':'disabled title="No hay partido próximo"')+'>'
+    +'📧 Enviar ahora'+(proximoPartido?' — '+partidoLabel(proximoPartido):'')+'</button>';
+  emailHtml += '</div>';
+
+  document.getElementById('main').innerHTML += emailHtml;
 }
 function reactivarJugador(id){
   const rec=playerById(id); if(!rec) return;
@@ -2034,6 +2065,7 @@ async function loadState(){
   if(state.nextAusenciaId===undefined) state.nextAusenciaId=DEFAULT_STATE.nextAusenciaId;
   if(!state.partidos) state.partidos=JSON.parse(JSON.stringify(DEFAULT_STATE.partidos));
   if(state.nextPartidoId===undefined) state.nextPartidoId=DEFAULT_STATE.nextPartidoId;
+  if(!state.emailConfig) state.emailConfig=JSON.parse(JSON.stringify(DEFAULT_STATE.emailConfig));
   // Bug 2: ensure nextPlayerId exists
   if(state.nextPlayerId===undefined) state.nextPlayerId=DEFAULT_STATE.nextPlayerId||100;
   // Bug 3: ensure nextLesionId, nextTarjetaId exist
@@ -2043,6 +2075,152 @@ async function loadState(){
 }
 
 let syncInFlight=false;
+// ---------- Email ----------
+function getProximoPartidoSemana(){
+  const hoy = getTodayStr();
+  // Partidos en los próximos 7 días
+  const enSemana = state.partidos
+    .filter(m => m.fecha >= hoy)
+    .sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  return enSemana.length ? enSemana[0] : null;
+}
+
+function buildEmailContent(partido){
+  const plist = getPlayersInCategory();
+  const hoy = getTodayStr();
+  const endOfYear = String(new Date().getFullYear())+'-12-31';
+
+  // Lesionados que vuelven esta semana (retorno <= fecha del partido)
+  const lesionesQueVuelven = state.lesiones.filter(l=>{
+    if(!plist.some(p=>p.id===l.playerId)) return false;
+    if(l.estado==='alta') return false;
+    if(!l.retorno) return false;
+    return l.retorno >= hoy && l.retorno <= partido.fecha;
+  }).map(l=>({p:playerById(l.playerId), l})).filter(x=>x.p);
+
+  // Ausentes que vuelven (fechaHasta <= fecha del partido)
+  const ausenciasQueVuelven = state.ausencias.filter(a=>{
+    if(!plist.some(p=>p.id===a.playerId)) return false;
+    if(!a.fechaHasta) return false;
+    return a.fechaHasta >= hoy && a.fechaHasta <= partido.fecha;
+  }).map(a=>({p:playerById(a.playerId), a})).filter(x=>x.p);
+
+  const partidoStr = formatDate(partido.fecha)+(partido.rival?' vs '+partido.rival:'')+(partido.condicion==='visita'?' (visita)':'');
+
+  let html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">
+      <div style="background:#322a4f;color:#fff;padding:20px;border-radius:8px 8px 0 0;">
+        <h2 style="margin:0;font-size:18px;">📋 Reporte Semanal — ${state.clubName}</h2>
+        <p style="margin:6px 0 0;opacity:0.8;font-size:13px;">Partido: ${partidoStr}</p>
+      </div>
+      <div style="border:1px solid #ddd;border-top:none;padding:20px;border-radius:0 0 8px 8px;">`;
+
+  if(lesionesQueVuelven.length){
+    html += `
+        <h3 style="color:#92400e;margin-top:0;">🔄 Posibles regresos de lesión</h3>
+        <p style="font-size:12px;color:#666;margin-top:-8px;">Jugadores con fecha de retorno estimada antes del partido — pendiente confirmación médica</p>
+        <table style="width:100%;border-collapse:collapse;">
+          <tr style="background:#f9fafb;"><th style="padding:8px;text-align:left;font-size:12px;color:#666;">Jugador</th><th style="padding:8px;text-align:left;font-size:12px;color:#666;">Posición</th><th style="padding:8px;text-align:left;font-size:12px;color:#666;">Lesión</th><th style="padding:8px;text-align:left;font-size:12px;color:#666;">Retorno est.</th></tr>`;
+    lesionesQueVuelven.forEach(({p,l})=>{
+      html += `<tr style="border-bottom:1px solid #eee;"><td style="padding:8px;font-weight:600;">${p.name}</td><td style="padding:8px;color:#666;">${p.pos}</td><td style="padding:8px;color:#666;">${l.desc||'—'}</td><td style="padding:8px;color:#92400e;">${formatDate(l.retorno)}</td></tr>`;
+    });
+    html += `</table>`;
+  }
+
+  if(ausenciasQueVuelven.length){
+    html += `
+        <h3 style="color:#1e3a8a;margin-top:${lesionesQueVuelven.length?'20px':'0'};">📅 Vuelta de ausencias</h3>
+        <p style="font-size:12px;color:#666;margin-top:-8px;">Jugadores cuya ausencia termina antes del partido</p>
+        <table style="width:100%;border-collapse:collapse;">
+          <tr style="background:#f9fafb;"><th style="padding:8px;text-align:left;font-size:12px;color:#666;">Jugador</th><th style="padding:8px;text-align:left;font-size:12px;color:#666;">Posición</th><th style="padding:8px;text-align:left;font-size:12px;color:#666;">Motivo</th><th style="padding:8px;text-align:left;font-size:12px;color:#666;">Vuelve</th></tr>`;
+    ausenciasQueVuelven.forEach(({p,a})=>{
+      html += `<tr style="border-bottom:1px solid #eee;"><td style="padding:8px;font-weight:600;">${p.name}</td><td style="padding:8px;color:#666;">${p.pos}</td><td style="padding:8px;color:#666;">${a.motivo||'—'}</td><td style="padding:8px;color:#1e3a8a;">${formatDate(a.fechaHasta)}</td></tr>`;
+    });
+    html += `</table>`;
+  }
+
+  if(!lesionesQueVuelven.length && !ausenciasQueVuelven.length){
+    html += `<p style="color:#666;">Sin regresos esperados para este partido.</p>`;
+  }
+
+  html += `
+        <hr style="border:none;border-top:1px solid #eee;margin:20px 0;">
+        <p style="font-size:11px;color:#aaa;margin:0;">Enviado automáticamente por RugbyTrack · ${state.clubName}</p>
+      </div>
+    </div>`;
+
+  return { html, lesionesQueVuelven, ausenciasQueVuelven };
+}
+
+async function enviarCorreoSemanal(manual){
+  const cfg = state.emailConfig;
+  if(!cfg.destinatarios || cfg.destinatarios.length===0){
+    showToast('Agrega al menos un destinatario en Configuración', 'err'); return;
+  }
+  const partido = getProximoPartidoSemana();
+  if(!partido){
+    showToast('No hay partido próximo esta semana', 'err'); return;
+  }
+
+  // Si es automático verificar si ya se envió hoy
+  if(!manual && cfg.ultimoEnvio === getTodayStr()){
+    return; // Ya se envió hoy
+  }
+
+  showToast('Enviando correo...', 'info');
+
+  const { html } = buildEmailContent(partido);
+  const subject = `📋 Reporte Semanal COBS — ${formatDate(partido.fecha)}${partido.rival?' vs '+partido.rival:''}`;
+
+  try {
+    const resp = await fetch('/.netlify/functions/send-email', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        to: cfg.destinatarios,
+        subject,
+        html
+      })
+    });
+    const data = await resp.json();
+    if(data.success){
+      state.emailConfig.ultimoEnvio = getTodayStr();
+      saveState();
+      showToast('✓ Correo enviado correctamente');
+      renderConfiguracion();
+    } else {
+      showToast('Error: '+(data.error||'Error desconocido'), 'err');
+    }
+  } catch(err){
+    showToast('Error de conexión: '+err.message, 'err');
+  }
+}
+
+function saveEmailConfig(){
+  const raw = document.getElementById('email-destinatarios').value;
+  const dias = ['0','1','2','3','4','5','6'];
+  const dia = document.getElementById('email-dia').value;
+  const destinatarios = raw.split('\n').map(e=>e.trim()).filter(e=>e.includes('@'));
+  if(destinatarios.length===0){ showToast('Ingresa al menos un email válido', 'err'); return; }
+  state.emailConfig.destinatarios = destinatarios;
+  state.emailConfig.diaSemana = parseInt(dia);
+  saveState();
+  showToast('✓ Configuración de correo guardada');
+  renderConfiguracion();
+}
+
+function checkAutoEmail(){
+  const cfg = state.emailConfig;
+  if(!cfg || !cfg.destinatarios || cfg.destinatarios.length===0) return;
+  if(cfg.ultimoEnvio === getTodayStr()) return;
+  const hoy = new Date();
+  if(hoy.getDay() !== cfg.diaSemana) return;
+  const partido = getProximoPartidoSemana();
+  if(!partido) return;
+  // Solo enviar si hay partido en los próximos 7 días
+  enviarCorreoSemanal(false);
+}
+
 function startRemoteSync(){
   setInterval(async function(){
     if(syncInFlight) return;
@@ -2072,6 +2250,8 @@ function safeRender(){
   __loaded=true;
   try{ render(); }catch(e){ console.error('render error', e); document.getElementById('main').innerHTML='<p style="color:var(--danger-text);">Error al cargar. Intenta recargar la página.</p>'; }
   if(!__syncStarted){ __syncStarted=true; startRemoteSync(); }
+  // Verificar si corresponde enviar correo automático hoy
+  setTimeout(checkAutoEmail, 3000);
 }
 setTimeout(function(){ if(!__loaded){ console.warn('Failsafe: forzando datos por defecto tras timeout'); state=JSON.parse(JSON.stringify(DEFAULT_STATE)); safeRender(); } }, 8000);
 try{
