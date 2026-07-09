@@ -2095,12 +2095,12 @@ function buildEmailContent(partido){
   const hoy = getTodayStr();
   const endOfYear = String(new Date().getFullYear())+'-12-31';
 
-  // Lesionados que vuelven esta semana (retorno <= fecha del partido)
+  // Lesionados que vuelven para este partido (retorno <= fecha del partido, incluyendo los ya vencidos)
   const lesionesQueVuelven = state.lesiones.filter(l=>{
     if(!plist.some(p=>p.id===l.playerId)) return false;
     if(l.estado==='alta') return false;
     if(!l.retorno) return false;
-    return l.retorno >= hoy && l.retorno <= partido.fecha;
+    return l.retorno <= partido.fecha; // incluye retornos ya vencidos (¿Lesionado?)
   }).map(l=>({p:playerById(l.playerId), l})).filter(x=>x.p);
 
   // Ausentes que vuelven (fechaHasta <= fecha del partido)
